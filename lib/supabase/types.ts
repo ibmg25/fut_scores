@@ -161,6 +161,45 @@ export interface Database {
         }
         Relationships: []
       }
+      groups: {
+        Row: {
+          id: string
+          name: string
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          user_id: string
+          joined_at: string
+        }
+        Insert: {
+          group_id: string
+          user_id: string
+          joined_at?: string
+        }
+        Update: {
+          group_id?: string
+          user_id?: string
+          joined_at?: string
+        }
+        Relationships: []
+      }
       predictions: {
         Row: {
           id: string
@@ -220,6 +259,16 @@ export interface Database {
         }
         Relationships: []
       }
+      v_group_leaderboard: {
+        Row: {
+          group_id: string
+          id: string
+          display_name: string
+          total_points: number
+          exact_results_count: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       finalize_match: {
@@ -252,6 +301,8 @@ export type Team = Tables<'teams'>
 export type Match = Tables<'matches'>
 export type UserProfile = Tables<'users_profiles'>
 export type Prediction = Tables<'predictions'>
+export type Group = Tables<'groups'>
+export type GroupMember = Tables<'group_members'>
 
 export type MatchWithTeams = Match & {
   home_team: Team
