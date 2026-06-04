@@ -13,7 +13,6 @@ interface Props {
 
 export default function GroupSelector({ groups, selectedGroupId, showAllPlayers = true }: Props) {
   if (groups.length === 0 && !showAllPlayers) return null
-  if (groups.length === 0) return null
 
   return (
     <div className="flex gap-2 flex-wrap mb-6">

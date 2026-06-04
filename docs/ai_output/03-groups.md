@@ -20,9 +20,14 @@ Three server actions (`createGroupAction`, `addMemberAction`, `removeMemberActio
 
 ## Leaderboard Integration
 
-The leaderboard page accepts a `?group=<id>` search param (Next.js 15+ async `searchParams`). It fetches the user's groups first, validates the requested group is one the user belongs to, then queries either `v_group_leaderboard` (filtered by `group_id`) or `v_leaderboard`. Both return the same `{ id, display_name, total_points, exact_results_count }` shape, so `PodiumSection` and `RankingList` are unchanged.
+The leaderboard page accepts a `?group=<id>` search param (Next.js 15+ async `searchParams`). The access model is group-centric:
 
-`GroupSelector` is a pure server component using `<Link>` elements — no client JS needed for navigation. It renders nothing if the user belongs to zero groups.
+- **Regular users** must belong to at least one group; zero-group users see a blocking empty state. They always see a group leaderboard — defaulting to their first group when no `?group=` param is present. They never see the global `v_leaderboard`.
+- **Superadmins** default to the global `v_leaderboard` and can navigate to any group via the selector. They see an "All Players" pill alongside the group pills.
+
+Both `v_group_leaderboard` and `v_leaderboard` return the same `{ id, display_name, total_points, exact_results_count }` shape, so `PodiumSection` and `RankingList` are unchanged.
+
+`GroupSelector` is a pure server component using `<Link>` elements — no client JS needed for navigation. It accepts a `showAllPlayers` prop (true for superadmins only) that controls whether the "All Players" pill is rendered. It renders nothing if the user belongs to zero groups and `showAllPlayers` is false.
 
 ## Files Created / Modified
 

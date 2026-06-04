@@ -157,25 +157,31 @@ Add a "Groups" nav link alongside "Match Results" and "Users":
 
 The page gains a `?group=<groupId>` search param.
 
+**Access model:**
+- **Regular users** are fully group-scoped. They must belong to at least one group to see the leaderboard. A user with zero groups sees a blocking "No group yet" message with instructions to contact the admin. Regular users never see the global `v_leaderboard`.
+- **Superadmins** default to the global `v_leaderboard` and can additionally navigate to any group leaderboard via the selector. They see the "All Players" pill.
+
 Logic:
-1. Fetch the user's groups via `group_members` where `user_id = auth.uid()`, joined with `groups` to get names.
-2. Read `searchParams.group` — if present and valid, fetch from `v_group_leaderboard` filtered by `group_id`. Otherwise, fetch from `v_leaderboard` (existing global leaderboard — unchanged).
-3. Pass the groups list and selected group to a `<GroupSelector>` client component.
-4. The rest of the page (PodiumSection + RankingList) receives the same data shape regardless of source — no changes to those components.
+1. Fetch the user's groups via `group_members` where `user_id = auth.uid()`, then fetch group names from `groups`.
+2. If the user is not superadmin and has zero groups, render a blocking empty state.
+3. Read `searchParams.group` — if present and belongs to the user's groups, use it as the selected group. Otherwise fall back: superadmin defaults to `null` (global), regular users default to their first group.
+4. Fetch leaderboard data: `v_group_leaderboard` filtered by `group_id` when a group is selected, `v_leaderboard` (global) otherwise (superadmin only).
+5. Pass the groups list and effective group to `<GroupSelector>`. The rest of the page (PodiumSection + RankingList) receives the same data shape regardless of source — no changes to those components.
 
 ### 4.2 New Component: `components/features/GroupSelector.tsx`
 
-Client component. Props: `{ groups: { id: string; name: string }[]; selectedGroupId: string | null }`.
+Server component. Props: `{ groups: { id: string; name: string }[]; selectedGroupId: string | null; showAllPlayers?: boolean }`.
 
-- Renders a row of pill/chip buttons: "All Players" (always first, links to `/leaderboard`) + one per group (links to `/leaderboard?group=<id>`).
+- `showAllPlayers` is `true` only for superadmins. When `true`, an "All Players" pill is rendered first, linking to `/leaderboard` (global view).
+- Renders one pill per group (links to `/leaderboard?group=<id>`).
 - Active pill uses `bg-primary text-primary-foreground`, inactive uses `bg-secondary text-secondary-foreground`.
-- Uses `useRouter().push()` or simple `<Link>` elements for navigation (prefer `<Link>` — no client JS needed for navigation).
-- If the user belongs to zero groups, render nothing (the page falls back to the global leaderboard without any selector).
+- Uses `<Link>` elements for navigation (no client JS needed).
+- If the user belongs to zero groups and `showAllPlayers` is `false`, render nothing. If `showAllPlayers` is `true`, render just the "All Players" pill.
 
 ### 4.3 Data Flow Summary
 
 ```
-/leaderboard              → v_leaderboard (global, existing)
+/leaderboard              → v_leaderboard (global) — superadmin only
 /leaderboard?group=<id>   → v_group_leaderboard WHERE group_id = <id>
 ```
 
@@ -229,8 +235,9 @@ Each step ends in a working, committable state.
 1. As admin, create a group from `/admin/groups`.
 2. Add 2–3 users to the group from `/admin/groups/[groupId]`.
 3. Remove a user from the group — confirm they disappear from the member list.
-4. As a regular user, go to `/leaderboard` — confirm "All Players" shows the existing global leaderboard.
-5. Confirm the group pills appear and clicking one filters the leaderboard to only show group members.
-6. Finalize a match result as admin — confirm both the global leaderboard and group leaderboard update correctly.
-7. Confirm `/matches` page is completely unaffected — predictions still work normally.
-8. Confirm a user who belongs to zero groups sees no group selector, just the global leaderboard.
+4. As a regular user with no groups, go to `/leaderboard` — confirm the "No group yet" blocking message is shown.
+5. As a regular user assigned to a group, go to `/leaderboard` — confirm the first group's leaderboard is shown by default with no "All Players" pill.
+6. Confirm group pills appear and clicking one filters the leaderboard to only show group members.
+7. As superadmin, go to `/leaderboard` — confirm the global leaderboard is shown with an "All Players" pill plus one pill per group.
+8. Finalize a match result as admin — confirm both the global leaderboard and group leaderboard update correctly.
+9. Confirm `/matches` page is completely unaffected — predictions still work normally.
