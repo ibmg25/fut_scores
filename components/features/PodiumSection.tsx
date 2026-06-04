@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import PlayerAvatar from './PlayerAvatar'
 
 interface LeaderboardEntry {
@@ -37,7 +38,11 @@ export default function PodiumSection({ top3 }: Props) {
       {entries.map(({ rank, entry, config }) => {
         if (!entry) return null
         return (
-          <div key={rank} className="flex flex-col items-center gap-2 flex-1 max-w-[140px]">
+          <Link
+            key={rank}
+            href={`/players/${entry.id}`}
+            className="flex flex-col items-center gap-2 flex-1 max-w-[140px] hover:opacity-80 transition-opacity"
+          >
             {config.crown && <span className="text-2xl">👑</span>}
             <PlayerAvatar displayName={entry.display_name} rank={rank} size="lg" />
             <div className="text-center">
@@ -50,7 +55,7 @@ export default function PodiumSection({ top3 }: Props) {
             >
               <span className="text-lg font-bold text-muted-foreground">{config.label}</span>
             </div>
-          </div>
+          </Link>
         )
       })}
     </div>

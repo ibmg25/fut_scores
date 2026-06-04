@@ -62,6 +62,7 @@ export interface Database {
           away_team_id: string
           kickoff_time: string
           phase: MatchPhase
+          is_knockout: boolean
           home_score: number | null
           away_score: number | null
           penalty_winner_team_id: string | null
@@ -77,6 +78,7 @@ export interface Database {
           away_team_id: string
           kickoff_time: string
           phase: MatchPhase
+          is_knockout?: boolean
           home_score?: number | null
           away_score?: number | null
           penalty_winner_team_id?: string | null
@@ -92,6 +94,7 @@ export interface Database {
           away_team_id?: string
           kickoff_time?: string
           phase?: MatchPhase
+          is_knockout?: boolean
           home_score?: number | null
           away_score?: number | null
           penalty_winner_team_id?: string | null
@@ -161,6 +164,45 @@ export interface Database {
         }
         Relationships: []
       }
+      groups: {
+        Row: {
+          id: string
+          name: string
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          user_id: string
+          joined_at: string
+        }
+        Insert: {
+          group_id: string
+          user_id: string
+          joined_at?: string
+        }
+        Update: {
+          group_id?: string
+          user_id?: string
+          joined_at?: string
+        }
+        Relationships: []
+      }
       predictions: {
         Row: {
           id: string
@@ -168,6 +210,7 @@ export interface Database {
           match_id: string
           predicted_home_score: number
           predicted_away_score: number
+          predicted_penalty_winner_team_id: string | null
           points_earned: number
           created_at: string
           updated_at: string
@@ -178,6 +221,7 @@ export interface Database {
           match_id: string
           predicted_home_score: number
           predicted_away_score: number
+          predicted_penalty_winner_team_id?: string | null
           points_earned?: number
           created_at?: string
           updated_at?: string
@@ -188,6 +232,7 @@ export interface Database {
           match_id?: string
           predicted_home_score?: number
           predicted_away_score?: number
+          predicted_penalty_winner_team_id?: string | null
           points_earned?: number
           created_at?: string
           updated_at?: string
@@ -213,6 +258,16 @@ export interface Database {
     Views: {
       v_leaderboard: {
         Row: {
+          id: string
+          display_name: string
+          total_points: number
+          exact_results_count: number
+        }
+        Relationships: []
+      }
+      v_group_leaderboard: {
+        Row: {
+          group_id: string
           id: string
           display_name: string
           total_points: number
@@ -252,6 +307,8 @@ export type Team = Tables<'teams'>
 export type Match = Tables<'matches'>
 export type UserProfile = Tables<'users_profiles'>
 export type Prediction = Tables<'predictions'>
+export type Group = Tables<'groups'>
+export type GroupMember = Tables<'group_members'>
 
 export type MatchWithTeams = Match & {
   home_team: Team

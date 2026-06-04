@@ -1,23 +1,13 @@
-import type { MatchPhase } from '@/lib/supabase/types'
-
 export interface ScoreInput {
   predictedHome: number
   predictedAway: number
   officialHome: number
   officialAway: number
   penaltyWinnerId: string | null
+  predictedPenaltyWinnerId: string | null
   homeTeamId: string
   awayTeamId: string
-  phase: MatchPhase
-}
-
-const GROUP_PHASES: MatchPhase[] = [
-  'group_a', 'group_b', 'group_c', 'group_d', 'group_e', 'group_f',
-  'group_g', 'group_h', 'group_i', 'group_j', 'group_k', 'group_l',
-]
-
-function isGroupPhase(phase: MatchPhase): boolean {
-  return GROUP_PHASES.includes(phase)
+  isKnockout: boolean
 }
 
 type Outcome = 'home' | 'away' | 'tie'
@@ -28,20 +18,6 @@ function getOutcomeFromScores(home: number, away: number): Outcome {
   return 'tie'
 }
 
-function getOfficialOutcome(
-  officialHome: number,
-  officialAway: number,
-  penaltyWinnerId: string | null,
-  homeTeamId: string,
-  awayTeamId: string,
-  phase: MatchPhase
-): Outcome {
-  if (!isGroupPhase(phase) && penaltyWinnerId !== null) {
-    return penaltyWinnerId === homeTeamId ? 'home' : 'away'
-  }
-  return getOutcomeFromScores(officialHome, officialAway)
-}
-
 export function scorePrediction(input: ScoreInput): number {
   const {
     predictedHome,
@@ -49,29 +25,37 @@ export function scorePrediction(input: ScoreInput): number {
     officialHome,
     officialAway,
     penaltyWinnerId,
+    predictedPenaltyWinnerId,
     homeTeamId,
-    awayTeamId,
-    phase,
+    isKnockout,
   } = input
 
-  // Tier 1: Exact result
+  // ── Base tiers ────────────────────────────────────────────────────────────
+  let points: number
+
   if (predictedHome === officialHome && predictedAway === officialAway) {
-    return 10
+    points = 10
+  } else if ((predictedHome - predictedAway) === (officialHome - officialAway)) {
+    points = 5
+  } else {
+    const predictedOutcome = getOutcomeFromScores(predictedHome, predictedAway)
+    const officialOutcome =
+      isKnockout && penaltyWinnerId !== null
+        ? (penaltyWinnerId === homeTeamId ? 'home' : 'away')
+        : getOutcomeFromScores(officialHome, officialAway)
+    points = predictedOutcome === officialOutcome ? 2 : 0
   }
 
-  // Tier 2: Same goal difference
-  if ((predictedHome - predictedAway) === (officialHome - officialAway)) {
-    return 5
+  // ── Penalty bonus (+3) ────────────────────────────────────────────────────
+  if (
+    isKnockout &&
+    penaltyWinnerId !== null &&
+    predictedHome === predictedAway &&
+    predictedPenaltyWinnerId !== null &&
+    predictedPenaltyWinnerId === penaltyWinnerId
+  ) {
+    points += 3
   }
 
-  // Tier 3: Correct outcome (winner or tie)
-  const predictedOutcome = getOutcomeFromScores(predictedHome, predictedAway)
-  const officialOutcome = getOfficialOutcome(
-    officialHome, officialAway, penaltyWinnerId, homeTeamId, awayTeamId, phase
-  )
-  if (predictedOutcome === officialOutcome) {
-    return 2
-  }
-
-  return 0
+  return points
 }
