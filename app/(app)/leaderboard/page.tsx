@@ -15,7 +15,7 @@ export default async function LeaderboardPage() {
   if (!user) redirect('/login')
 
   const { data: profiles } = await supabase
-    .from('users_profiles')
+    .from('v_leaderboard')
     .select('id, display_name, total_points, exact_results_count')
     .order('total_points', { ascending: false })
     .order('exact_results_count', { ascending: false })

@@ -210,7 +210,17 @@ export interface Database {
         ]
       }
     }
-    Views: Record<string, never>
+    Views: {
+      v_leaderboard: {
+        Row: {
+          id: string
+          display_name: string
+          total_points: number
+          exact_results_count: number
+        }
+        Relationships: []
+      }
+    }
     Functions: {
       finalize_match: {
         Args: {

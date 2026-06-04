@@ -32,8 +32,22 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
 
   if (compact) {
     return (
-      <form action={action} className="flex items-center gap-2">
+      <form action={action} className="flex items-center gap-2 flex-wrap">
         <input type="hidden" name="matchId" value={match.id} />
+        {isKnockout ? (
+          <Select name="penaltyWinnerId" defaultValue={match.penalty_winner_team_id ?? ''}>
+            <SelectTrigger className="h-7 w-28 text-xs">
+              <SelectValue placeholder="No pens" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No pens</SelectItem>
+              <SelectItem value={match.home_team_id}>{match.home_team.name}</SelectItem>
+              <SelectItem value={match.away_team_id}>{match.away_team.name}</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <input type="hidden" name="penaltyWinnerId" value="" />
+        )}
         <Input
           name="homeScore"
           type="number"

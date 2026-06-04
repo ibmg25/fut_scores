@@ -28,7 +28,7 @@ export async function finalizeMatchAction(
   }
 
   const supabase = await createClient()
-  const { error, data } = await supabase.rpc('finalize_match', {
+  const { error } = await supabase.rpc('finalize_match', {
     p_match_id: parsed.data.matchId,
     p_home: parsed.data.homeScore,
     p_away: parsed.data.awayScore,

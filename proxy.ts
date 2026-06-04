@@ -42,7 +42,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Authenticated: check must_change_password
-  if (!isAuthRoute && pathname !== '/change-password') {
+  if (!isAuthRoute) {
     const { data: profile } = await supabase
       .from('users_profiles')
       .select('must_change_password, role')
