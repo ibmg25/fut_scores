@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import CreateUserForm from './create-user-form'
+import ResetPasswordDialog from './reset-password-dialog'
 import {
   Table,
   TableBody,
@@ -48,6 +49,7 @@ export default async function AdminUsersPage() {
                   <TableHead>Role</TableHead>
                   <TableHead className="text-right">Points</TableHead>
                   <TableHead className="text-right">Status</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -71,6 +73,9 @@ export default async function AdminUsersPage() {
                       ) : (
                         <span className="text-xs text-primary">Active</span>
                       )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <ResetPasswordDialog userId={p.id} userName={p.display_name} />
                     </TableCell>
                   </TableRow>
                 ))}

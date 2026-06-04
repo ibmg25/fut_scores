@@ -11,6 +11,10 @@ const schema = z.object({
   displayName: z.string().min(2).max(50).trim(),
 })
 
+const resetSchema = z.object({
+  userId: z.string().uuid(),
+})
+
 function generateTempPassword(): string {
   return randomBytes(12).toString('base64url').slice(0, 16)
 }
@@ -69,6 +73,54 @@ export async function createUserAction(
     await adminClient.auth.admin.deleteUser(newUser.user.id)
     return { error: profileError.message, tempPassword: null }
   }
+
+  revalidatePath('/admin/users')
+  return { error: null, tempPassword }
+}
+
+export async function resetPasswordAction(
+  _prevState: { error: string | null; tempPassword: string | null },
+  formData: FormData
+): Promise<{ error: string | null; tempPassword: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.', tempPassword: null }
+
+  const { data: profile } = await supabase
+    .from('users_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'superadmin') {
+    return { error: 'Permission denied.', tempPassword: null }
+  }
+
+  const parsed = resetSchema.safeParse({ userId: formData.get('userId') })
+  if (!parsed.success) {
+    return { error: 'Invalid user.', tempPassword: null }
+  }
+
+  if (parsed.data.userId === user.id) {
+    return { error: 'Cannot reset your own password from here.', tempPassword: null }
+  }
+
+  const tempPassword = generateTempPassword()
+  const adminClient = createAdminClient()
+
+  const { error: updateError } = await adminClient.auth.admin.updateUserById(
+    parsed.data.userId,
+    { password: tempPassword }
+  )
+
+  if (updateError) {
+    return { error: updateError.message, tempPassword: null }
+  }
+
+  await adminClient
+    .from('users_profiles')
+    .update({ must_change_password: true })
+    .eq('id', parsed.data.userId)
 
   revalidatePath('/admin/users')
   return { error: null, tempPassword }
