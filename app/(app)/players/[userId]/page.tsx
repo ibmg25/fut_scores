@@ -5,7 +5,7 @@ import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PlayerAvatar from '@/components/features/PlayerAvatar'
 import LocalKickoffTime from '@/components/features/LocalKickoffTime'
-import { PHASE_LABELS, PHASE_ORDER } from '@/components/features/MatchesByPhase'
+import { PHASE_LABELS, PHASE_ORDER } from '@/lib/match-phases'
 import type { MatchWithTeams, Prediction, MatchPhase } from '@/lib/supabase/types'
 
 function PointsBadge({ points }: { points: number }) {
