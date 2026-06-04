@@ -9,6 +9,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Mobile top bar */}
+      <header className="md:hidden bg-card border-b border-border sticky top-0 z-10">
+        <div className="flex items-center justify-between h-12 px-4">
+          <span className="font-bold text-base text-primary">⚽ Fut Score</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{profile?.display_name}</span>
+            <SignOutButton />
+          </div>
+        </div>
+      </header>
+
       {/* Desktop top navbar */}
       <nav className="hidden md:block bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 flex items-center justify-between h-14">
