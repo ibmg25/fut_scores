@@ -32,8 +32,22 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
 
   if (compact) {
     return (
-      <form action={action} className="flex items-center gap-2">
+      <form action={action} className="flex items-center gap-2 flex-wrap">
         <input type="hidden" name="matchId" value={match.id} />
+        {isKnockout ? (
+          <Select name="penaltyWinnerId" defaultValue={match.penalty_winner_team_id ?? ''}>
+            <SelectTrigger className="h-7 w-28 text-xs">
+              <SelectValue placeholder="No pens" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No pens</SelectItem>
+              <SelectItem value={match.home_team_id}>{match.home_team.name}</SelectItem>
+              <SelectItem value={match.away_team_id}>{match.away_team.name}</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <input type="hidden" name="penaltyWinnerId" value="" />
+        )}
         <Input
           name="homeScore"
           type="number"
@@ -42,7 +56,7 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
           defaultValue={match.home_score ?? 0}
           className="w-12 h-7 text-center px-1 text-sm"
         />
-        <span className="text-zinc-400 text-xs">–</span>
+        <span className="text-muted-foreground text-xs">–</span>
         <Input
           name="awayScore"
           type="number"
@@ -59,12 +73,12 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-zinc-200 p-4 space-y-4">
+    <div className="bg-card border border-border rounded-xl p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div className="font-medium text-sm">
           {match.home_team.name} vs {match.away_team.name}
         </div>
-        <span className="text-xs text-zinc-500 capitalize">
+        <span className="text-xs text-muted-foreground capitalize">
           {match.phase.replace('_', ' ')}
         </span>
       </div>
@@ -86,7 +100,7 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
               className="h-10 text-center text-lg"
             />
           </div>
-          <span className="text-zinc-400 mt-5">–</span>
+          <span className="text-muted-foreground mt-5">–</span>
           <div className="flex-1 space-y-1">
             <Label className="text-xs">{match.away_team.name}</Label>
             <Input

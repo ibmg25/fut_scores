@@ -34,7 +34,7 @@ export default async function AdminResultsPage() {
       <section>
         <h2 className="text-lg font-semibold mb-3">Pending Matches</h2>
         {pending.length === 0 ? (
-          <p className="text-zinc-500 text-sm">All matches have been finalized.</p>
+          <p className="text-muted-foreground text-sm">All matches have been finalized.</p>
         ) : (
           <div className="space-y-3">
             {pending.map((match) => (
@@ -47,18 +47,18 @@ export default async function AdminResultsPage() {
       <section>
         <h2 className="text-lg font-semibold mb-3">Finished Matches</h2>
         {finished.length === 0 ? (
-          <p className="text-zinc-500 text-sm">No finished matches yet.</p>
+          <p className="text-muted-foreground text-sm">No finished matches yet.</p>
         ) : (
           <div className="space-y-2">
             {finished.map((match) => (
               <div
                 key={match.id}
-                className="bg-white rounded-lg border border-zinc-200 p-3 flex items-center justify-between text-sm"
+                className="bg-card border border-border rounded-xl p-3 flex items-center justify-between text-sm"
               >
                 <span>
                   {match.home_team.name} {match.home_score}–{match.away_score} {match.away_team.name}
                   {match.penalty_winner_team && (
-                    <span className="ml-2 text-zinc-500">
+                    <span className="ml-2 text-muted-foreground">
                       (pens: {match.penalty_winner_team.name})
                     </span>
                   )}

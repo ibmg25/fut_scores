@@ -16,11 +16,11 @@ export default async function ChangePasswordPage() {
   if (!profile?.must_change_password) redirect('/matches')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold tracking-tight">Set Your Password</h1>
-          <p className="mt-2 text-zinc-500 text-sm">
+          <p className="mt-2 text-muted-foreground text-sm">
             Hi {profile.display_name}, please set a new password to continue.
           </p>
         </div>

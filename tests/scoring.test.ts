@@ -57,7 +57,7 @@ describe('scorePrediction', () => {
       expect(scorePrediction(make({ predictedHome: 0, predictedAway: 1, officialHome: 1, officialAway: 4 }))).toBe(2)
     })
 
-    it('awards 2 for predicted tie in group match, correct', () => {
+    it('awards 5 for predicted tie when official is also a tie (same diff=0, tier 2)', () => {
       expect(scorePrediction(make({ predictedHome: 1, predictedAway: 1, officialHome: 2, officialAway: 2 }))).toBe(5)
     })
 
