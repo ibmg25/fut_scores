@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import PlayerAvatar from './PlayerAvatar'
 
 interface LeaderboardEntry {
@@ -23,9 +24,10 @@ export default function RankingList({ entries, currentUserId, startRank, current
         const rank = startRank + index
         const isCurrentUser = entry.id === currentUserId
         return (
-          <div
+          <Link
             key={entry.id}
-            className={`flex items-center gap-3 px-4 py-3 ${
+            href={`/players/${entry.id}`}
+            className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors ${
               isCurrentUser ? 'border-l-2 border-l-primary' : 'border-l-2 border-l-transparent'
             } ${index < entries.length - 1 ? 'border-b border-border' : ''}`}
           >
@@ -39,7 +41,7 @@ export default function RankingList({ entries, currentUserId, startRank, current
               <span className="text-sm font-semibold">{entry.total_points} pts</span>
               <span className="text-xs text-muted-foreground">{entry.exact_results_count} exact</span>
             </div>
-          </div>
+          </Link>
         )
       })}
 
