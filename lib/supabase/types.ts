@@ -62,6 +62,7 @@ export interface Database {
           away_team_id: string
           kickoff_time: string
           phase: MatchPhase
+          is_knockout: boolean
           home_score: number | null
           away_score: number | null
           penalty_winner_team_id: string | null
@@ -77,6 +78,7 @@ export interface Database {
           away_team_id: string
           kickoff_time: string
           phase: MatchPhase
+          is_knockout?: boolean
           home_score?: number | null
           away_score?: number | null
           penalty_winner_team_id?: string | null
@@ -92,6 +94,7 @@ export interface Database {
           away_team_id?: string
           kickoff_time?: string
           phase?: MatchPhase
+          is_knockout?: boolean
           home_score?: number | null
           away_score?: number | null
           penalty_winner_team_id?: string | null
@@ -207,6 +210,7 @@ export interface Database {
           match_id: string
           predicted_home_score: number
           predicted_away_score: number
+          predicted_penalty_winner_team_id: string | null
           points_earned: number
           created_at: string
           updated_at: string
@@ -217,6 +221,7 @@ export interface Database {
           match_id: string
           predicted_home_score: number
           predicted_away_score: number
+          predicted_penalty_winner_team_id?: string | null
           points_earned?: number
           created_at?: string
           updated_at?: string
@@ -227,6 +232,7 @@ export interface Database {
           match_id?: string
           predicted_home_score?: number
           predicted_away_score?: number
+          predicted_penalty_winner_team_id?: string | null
           points_earned?: number
           created_at?: string
           updated_at?: string

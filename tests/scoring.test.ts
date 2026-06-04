@@ -12,9 +12,10 @@ function make(overrides: Partial<ScoreInput> = {}): ScoreInput {
     officialHome: 0,
     officialAway: 0,
     penaltyWinnerId: null,
+    predictedPenaltyWinnerId: null,
     homeTeamId: HOME_ID,
     awayTeamId: AWAY_ID,
-    phase: 'group_a',
+    isKnockout: false,
     ...overrides,
   }
 }
@@ -73,7 +74,7 @@ describe('scorePrediction', () => {
         predictedHome: 1, predictedAway: 1,
         officialHome: 1, officialAway: 1,
         penaltyWinnerId: HOME_ID,
-        phase: 'qf',
+        isKnockout: true,
       }))).toBe(10)
     })
 
@@ -83,7 +84,7 @@ describe('scorePrediction', () => {
         predictedHome: 2, predictedAway: 2,
         officialHome: 1, officialAway: 1,
         penaltyWinnerId: HOME_ID,
-        phase: 'sf',
+        isKnockout: true,
       }))).toBe(5)
     })
 
@@ -93,7 +94,7 @@ describe('scorePrediction', () => {
         predictedHome: 2, predictedAway: 1,
         officialHome: 1, officialAway: 1,
         penaltyWinnerId: HOME_ID,
-        phase: 'r16',
+        isKnockout: true,
       }))).toBe(2)
     })
 
@@ -103,7 +104,7 @@ describe('scorePrediction', () => {
         predictedHome: 0, predictedAway: 1,
         officialHome: 0, officialAway: 0,
         penaltyWinnerId: AWAY_ID,
-        phase: 'final',
+        isKnockout: true,
       }))).toBe(2)
     })
 
@@ -113,7 +114,7 @@ describe('scorePrediction', () => {
         predictedHome: 1, predictedAway: 1,
         officialHome: 1, officialAway: 1,
         penaltyWinnerId: HOME_ID,
-        phase: 'qf',
+        isKnockout: true,
       }))).toBe(10) // exact score — not 0, this is tier 1
     })
 
@@ -123,7 +124,7 @@ describe('scorePrediction', () => {
         predictedHome: 2, predictedAway: 0,
         officialHome: 1, officialAway: 1,
         penaltyWinnerId: AWAY_ID,
-        phase: 'qf',
+        isKnockout: true,
       }))).toBe(0)
     })
 
@@ -133,7 +134,7 @@ describe('scorePrediction', () => {
         predictedHome: 2, predictedAway: 2,
         officialHome: 0, officialAway: 0,
         penaltyWinnerId: AWAY_ID,
-        phase: 'sf',
+        isKnockout: true,
       }))).toBe(5) // same diff (0) — tier 2 fires before tier 3
     })
 
@@ -143,7 +144,7 @@ describe('scorePrediction', () => {
         predictedHome: 3, predictedAway: 0,
         officialHome: 0, officialAway: 0,
         penaltyWinnerId: AWAY_ID,
-        phase: 'final',
+        isKnockout: true,
       }))).toBe(0)
     })
   })
@@ -168,8 +169,82 @@ describe('scorePrediction', () => {
         predictedHome: 1, predictedAway: 0,
         officialHome: 2, officialAway: 1,
         penaltyWinnerId: null,
-        phase: 'group_b',
+        isKnockout: false,
       }))).toBe(5)
+    })
+  })
+
+  describe('Penalty winner bonus (+3 points)', () => {
+    it('awards 13 for exact tied score + correct penalty pick', () => {
+      expect(scorePrediction(make({
+        predictedHome: 1, predictedAway: 1,
+        officialHome: 1, officialAway: 1,
+        penaltyWinnerId: HOME_ID,
+        predictedPenaltyWinnerId: HOME_ID,
+        isKnockout: true,
+      }))).toBe(13)
+    })
+
+    it('awards 8 for same-diff tie + correct penalty pick', () => {
+      // predicted 2-2, official 1-1, same diff 0
+      expect(scorePrediction(make({
+        predictedHome: 2, predictedAway: 2,
+        officialHome: 1, officialAway: 1,
+        penaltyWinnerId: HOME_ID,
+        predictedPenaltyWinnerId: HOME_ID,
+        isKnockout: true,
+      }))).toBe(8)
+    })
+
+    it('awards 10 (no bonus) for exact score + wrong penalty pick', () => {
+      expect(scorePrediction(make({
+        predictedHome: 1, predictedAway: 1,
+        officialHome: 1, officialAway: 1,
+        penaltyWinnerId: HOME_ID,
+        predictedPenaltyWinnerId: AWAY_ID,
+        isKnockout: true,
+      }))).toBe(10)
+    })
+
+    it('awards 10 (no bonus) for exact score + no penalty pick', () => {
+      expect(scorePrediction(make({
+        predictedHome: 1, predictedAway: 1,
+        officialHome: 1, officialAway: 1,
+        penaltyWinnerId: HOME_ID,
+        predictedPenaltyWinnerId: null,
+        isKnockout: true,
+      }))).toBe(10)
+    })
+
+    it('awards 10 (no bonus) when match had no penalty winner', () => {
+      expect(scorePrediction(make({
+        predictedHome: 1, predictedAway: 1,
+        officialHome: 1, officialAway: 1,
+        penaltyWinnerId: null,
+        predictedPenaltyWinnerId: HOME_ID,
+        isKnockout: true,
+      }))).toBe(10)
+    })
+
+    it('awards base tier only for non-tie prediction even if pick would be correct', () => {
+      // predicted 2-1 (not a tie) — bonus never applies
+      expect(scorePrediction(make({
+        predictedHome: 2, predictedAway: 1,
+        officialHome: 2, officialAway: 1,
+        penaltyWinnerId: HOME_ID,
+        predictedPenaltyWinnerId: HOME_ID,
+        isKnockout: true,
+      }))).toBe(10)
+    })
+
+    it('no bonus in group stage matches', () => {
+      expect(scorePrediction(make({
+        predictedHome: 1, predictedAway: 1,
+        officialHome: 1, officialAway: 1,
+        penaltyWinnerId: HOME_ID,
+        predictedPenaltyWinnerId: HOME_ID,
+        isKnockout: false,
+      }))).toBe(10)
     })
   })
 })

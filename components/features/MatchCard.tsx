@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { Lock, Loader2 } from 'lucide-react'
@@ -10,6 +10,7 @@ import LocalKickoffTime from './LocalKickoffTime'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import type { MatchWithTeams, Prediction } from '@/lib/supabase/types'
 
 interface Props {
@@ -34,13 +35,12 @@ function StatusBadge({ match }: { match: MatchWithTeams }) {
 
 function PointsBadge({ points }: { points: number }) {
   const colorClass =
-    points === 10
-      ? 'text-green-400'
-      : points === 5
-      ? 'text-emerald-400'
-      : points === 2
-      ? 'text-yellow-400'
-      : 'text-muted-foreground'
+    points >= 13 ? 'text-yellow-300'
+    : points === 10 ? 'text-green-400'
+    : points === 8  ? 'text-emerald-300'
+    : points === 5  ? 'text-emerald-400'
+    : points === 2  ? 'text-yellow-400'
+    : 'text-muted-foreground'
   return <span className={`font-semibold ${colorClass}`}>{points} pts</span>
 }
 
@@ -49,11 +49,23 @@ const initialState = { error: null as string | null, success: false }
 export default function MatchCard({ match, prediction }: Props) {
   const [state, action, pending] = useActionState(upsertPrediction, initialState)
   const locked = match.status === 'finished' || isPredictionLocked(match.kickoff_time)
+  const isKnockout = match.is_knockout
+
+  const [homeVal, setHomeVal] = useState(prediction?.predicted_home_score?.toString() ?? '')
+  const [awayVal, setAwayVal] = useState(prediction?.predicted_away_score?.toString() ?? '')
+  const showPenaltyPicker = isKnockout && homeVal !== '' && awayVal !== '' && homeVal === awayVal
 
   useEffect(() => {
     if (state.success) toast.success('Prediction saved!')
     else if (state.error) toast.error(state.error)
   }, [state])
+
+  const penaltyPickTeam =
+    prediction?.predicted_penalty_winner_team_id === match.home_team_id
+      ? match.home_team
+      : prediction?.predicted_penalty_winner_team_id === match.away_team_id
+      ? match.away_team
+      : null
 
   const teamsRow = (scoreCenter: React.ReactNode) => (
     <div className="flex items-center gap-3">
@@ -125,6 +137,9 @@ export default function MatchCard({ match, prediction }: Props) {
           {match.status === 'finished' && prediction && (
             <div className="text-xs text-muted-foreground text-center">
               Your pick: {prediction.predicted_home_score}–{prediction.predicted_away_score}
+              {isKnockout && penaltyPickTeam && (
+                <> ({penaltyPickTeam.name} wins pens)</>
+              )}
               {' · '}
               <PointsBadge points={prediction.points_earned} />
             </div>
@@ -146,6 +161,7 @@ export default function MatchCard({ match, prediction }: Props) {
                 disabled={pending}
                 className="w-12 h-12 text-center px-1 text-xl"
                 placeholder="0"
+                onChange={e => setHomeVal(e.target.value)}
               />
               <span className="text-muted-foreground text-sm">–</span>
               <Input
@@ -158,7 +174,25 @@ export default function MatchCard({ match, prediction }: Props) {
                 disabled={pending}
                 className="w-12 h-12 text-center px-1 text-xl"
                 placeholder="0"
+                onChange={e => setAwayVal(e.target.value)}
               />
+            </div>
+          )}
+
+          {showPenaltyPicker && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Penalty winner</Label>
+              <select
+                key={`${homeVal}-${awayVal}`}
+                name="penaltyWinnerId"
+                defaultValue={prediction?.predicted_penalty_winner_team_id ?? ''}
+                disabled={pending}
+                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">— select team —</option>
+                <option value={match.home_team_id}>{match.home_team.name}</option>
+                <option value={match.away_team_id}>{match.away_team.name}</option>
+              </select>
             </div>
           )}
 

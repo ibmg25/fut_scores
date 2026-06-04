@@ -12,12 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { MatchWithTeams, MatchPhase } from '@/lib/supabase/types'
-
-const GROUP_PHASES: MatchPhase[] = [
-  'group_a', 'group_b', 'group_c', 'group_d', 'group_e', 'group_f',
-  'group_g', 'group_h', 'group_i', 'group_j', 'group_k', 'group_l',
-]
+import type { MatchWithTeams } from '@/lib/supabase/types'
 
 const initialState = { error: null, success: false }
 
@@ -28,7 +23,7 @@ interface Props {
 
 export default function FinalizeMatchForm({ match, compact }: Props) {
   const [state, action, pending] = useActionState(finalizeMatchAction, initialState)
-  const isKnockout = !GROUP_PHASES.includes(match.phase)
+  const isKnockout = match.is_knockout
 
   if (compact) {
     return (
