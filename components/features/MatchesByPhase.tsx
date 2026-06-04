@@ -32,7 +32,7 @@ export default function MatchesByPhase({ matches, predictions }: Props) {
 
   if (phases.length === 0) {
     return (
-      <div className="text-center py-20 text-zinc-500">
+      <div className="text-center py-20 text-muted-foreground">
         No matches scheduled yet.
       </div>
     )
@@ -40,13 +40,14 @@ export default function MatchesByPhase({ matches, predictions }: Props) {
 
   return (
     <Tabs defaultValue={phases[0]}>
-      <TabsList className="flex flex-wrap h-auto gap-1 mb-4">
+      <TabsList className="flex flex-nowrap overflow-x-auto h-auto gap-1 mb-0 w-full justify-start">
         {phases.map((phase) => (
-          <TabsTrigger key={phase} value={phase} className="text-xs">
+          <TabsTrigger key={phase} value={phase} className="text-xs shrink-0 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary">
             {PHASE_LABELS[phase]}
           </TabsTrigger>
         ))}
       </TabsList>
+      <div className="border-t border-border mb-4" />
       {phases.map((phase) => {
         const phaseMatches = matches
           .filter((m) => m.phase === phase)
