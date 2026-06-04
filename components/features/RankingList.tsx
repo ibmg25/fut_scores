@@ -35,7 +35,10 @@ export default function RankingList({ entries, currentUserId, startRank, current
               {entry.display_name}
               {isCurrentUser && <span className="ml-1.5 text-xs text-muted-foreground">(you)</span>}
             </span>
-            <span className="text-sm font-semibold shrink-0">{entry.total_points} pts</span>
+            <div className="flex flex-col items-end shrink-0">
+              <span className="text-sm font-semibold">{entry.total_points} pts</span>
+              <span className="text-xs text-muted-foreground">{entry.exact_results_count} exact</span>
+            </div>
           </div>
         )
       })}

@@ -43,6 +43,7 @@ export default function PodiumSection({ top3 }: Props) {
             <div className="text-center">
               <p className="text-sm font-semibold truncate max-w-[100px]">{entry.display_name}</p>
               <p className="text-xs text-muted-foreground">{entry.total_points} pts</p>
+              <p className="text-xs text-muted-foreground">{entry.exact_results_count} exact</p>
             </div>
             <div
               className={`w-full ${config.height} bg-card border border-border border-t-2 ${rankColors[rank]} rounded-t-lg flex items-center justify-center`}
