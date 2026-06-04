@@ -32,17 +32,17 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes that don't require auth
-  const isAuthRoute = pathname.startsWith('/auth') || pathname === '/login'
+  const isAuthRoute = pathname === '/login' || pathname === '/change-password'
 
   if (!user) {
     if (!isAuthRoute) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+      return NextResponse.redirect(new URL('/login', request.url))
     }
     return response
   }
 
   // Authenticated: check must_change_password
-  if (!isAuthRoute && pathname !== '/auth/change-password') {
+  if (!isAuthRoute && pathname !== '/change-password') {
     const { data: profile } = await supabase
       .from('users_profiles')
       .select('must_change_password, role')
@@ -50,7 +50,7 @@ export async function proxy(request: NextRequest) {
       .single()
 
     if (profile?.must_change_password) {
-      return NextResponse.redirect(new URL('/auth/change-password', request.url))
+      return NextResponse.redirect(new URL('/change-password', request.url))
     }
 
     // Admin guard
