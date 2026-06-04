@@ -64,7 +64,7 @@ export default function MatchCard({ match, prediction }: Props) {
             <span className="text-lg font-bold">{match.away_score}</span>
           </div>
         ) : (
-          <form action={action} className="flex items-center gap-1.5 shrink-0">
+          <form key={prediction?.updated_at ?? `new-${match.id}`} action={action} className="flex items-center gap-1.5 shrink-0">
             <input type="hidden" name="matchId" value={match.id} />
             <Input
               name="homeScore"
