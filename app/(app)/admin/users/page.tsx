@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import CreateUserForm from './create-user-form'
 import {
@@ -12,11 +11,10 @@ import {
 import { Badge } from '@/components/ui/badge'
 
 export default async function AdminUsersPage() {
-  const supabase = await createClient()
   const adminClient = createAdminClient()
 
   const [{ data: profiles }, { data: authUsers }] = await Promise.all([
-    supabase
+    adminClient
       .from('users_profiles')
       .select('id, display_name, role, total_points, must_change_password')
       .order('display_name', { ascending: true }),
@@ -39,9 +37,9 @@ export default async function AdminUsersPage() {
       <section>
         <h2 className="text-lg font-semibold mb-3">All Users</h2>
         {!profiles || profiles.length === 0 ? (
-          <p className="text-zinc-500 text-sm">No users yet.</p>
+          <p className="text-muted-foreground text-sm">No users yet.</p>
         ) : (
-          <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -56,7 +54,7 @@ export default async function AdminUsersPage() {
                 {profiles.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.display_name}</TableCell>
-                    <TableCell className="text-zinc-500 text-sm">
+                    <TableCell className="text-muted-foreground text-sm">
                       {emailMap.get(p.id) ?? '–'}
                     </TableCell>
                     <TableCell>
@@ -69,9 +67,9 @@ export default async function AdminUsersPage() {
                     <TableCell className="text-right">{p.total_points}</TableCell>
                     <TableCell className="text-right">
                       {p.must_change_password ? (
-                        <span className="text-xs text-amber-600">Temp password</span>
+                        <span className="text-xs text-yellow-500">Temp password</span>
                       ) : (
-                        <span className="text-xs text-green-600">Active</span>
+                        <span className="text-xs text-primary">Active</span>
                       )}
                     </TableCell>
                   </TableRow>

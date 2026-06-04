@@ -1,0 +1,57 @@
+import PlayerAvatar from './PlayerAvatar'
+
+interface LeaderboardEntry {
+  id: string
+  display_name: string
+  total_points: number
+  exact_results_count: number
+}
+
+interface Props {
+  top3: LeaderboardEntry[]
+}
+
+const podiumConfig = [
+  { rank: 2 as const, height: 'h-20', label: '#2' },
+  { rank: 1 as const, height: 'h-28', label: '#1', crown: true },
+  { rank: 3 as const, height: 'h-16', label: '#3' },
+]
+
+const rankColors: Record<1 | 2 | 3, string> = {
+  1: 'border-t-[var(--gold)]',
+  2: 'border-t-[var(--silver)]',
+  3: 'border-t-[var(--bronze)]',
+}
+
+export default function PodiumSection({ top3 }: Props) {
+  // Map rank order to display order: [2nd, 1st, 3rd]
+  const displayOrder = [2, 1, 3] as const
+  const entries = displayOrder.map((rank) => ({
+    rank,
+    entry: top3[rank - 1] ?? null,
+    config: podiumConfig.find((c) => c.rank === rank)!,
+  }))
+
+  return (
+    <div className="flex items-end justify-center gap-2 mb-8">
+      {entries.map(({ rank, entry, config }) => {
+        if (!entry) return null
+        return (
+          <div key={rank} className="flex flex-col items-center gap-2 flex-1 max-w-[140px]">
+            {config.crown && <span className="text-2xl">👑</span>}
+            <PlayerAvatar displayName={entry.display_name} rank={rank} size="lg" />
+            <div className="text-center">
+              <p className="text-sm font-semibold truncate max-w-[100px]">{entry.display_name}</p>
+              <p className="text-xs text-muted-foreground">{entry.total_points} pts</p>
+            </div>
+            <div
+              className={`w-full ${config.height} bg-card border border-border border-t-2 ${rankColors[rank]} rounded-t-lg flex items-center justify-center`}
+            >
+              <span className="text-lg font-bold text-muted-foreground">{config.label}</span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}

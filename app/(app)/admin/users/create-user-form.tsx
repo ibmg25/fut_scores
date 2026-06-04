@@ -39,12 +39,12 @@ export default function CreateUserForm() {
         <p className="text-sm text-red-500">{state.error}</p>
       )}
       {state.tempPassword && (
-        <div className="rounded-md bg-amber-50 border border-amber-200 p-3 space-y-1">
-          <p className="text-sm font-medium text-amber-800">User created!</p>
-          <p className="text-xs text-amber-700">
+        <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-3 space-y-1">
+          <p className="text-sm font-medium text-yellow-400">User created!</p>
+          <p className="text-xs text-muted-foreground">
             Share this temporary password with the user (shown once):
           </p>
-          <code className="block text-sm font-mono bg-amber-100 rounded px-2 py-1 text-amber-900 select-all">
+          <code className="block text-sm font-mono bg-secondary rounded px-2 py-1 text-foreground select-all">
             {state.tempPassword}
           </code>
         </div>
