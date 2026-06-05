@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import { Lock, Loader2 } from 'lucide-react'
+import { Lock, Loader2, Check } from 'lucide-react'
 import { upsertPrediction } from '@/app/(app)/matches/actions'
 import { isPredictionLocked } from '@/lib/datetime/format'
 import LocalKickoffTime from './LocalKickoffTime'
@@ -73,12 +73,36 @@ export default function MatchCard({ match, prediction }: Props) {
 
   const [homeVal, setHomeVal] = useState(prediction?.predicted_home_score?.toString() ?? '')
   const [awayVal, setAwayVal] = useState(prediction?.predicted_away_score?.toString() ?? '')
+  const [penaltyVal, setPenaltyVal] = useState<string>(prediction?.predicted_penalty_winner_team_id ?? '')
+
   const showPenaltyPicker = isKnockout && homeVal !== '' && awayVal !== '' && homeVal === awayVal
+
+  const savedHome = prediction?.predicted_home_score?.toString() ?? ''
+  const savedAway = prediction?.predicted_away_score?.toString() ?? ''
+  const savedPenalty = prediction?.predicted_penalty_winner_team_id ?? ''
+
+  const isDirty =
+    homeVal !== savedHome ||
+    awayVal !== savedAway ||
+    (showPenaltyPicker && penaltyVal !== savedPenalty)
 
   useEffect(() => {
     if (state.success) toast.success('Prediction saved!')
     else if (state.error) toast.error(state.error)
   }, [state])
+
+  // Uncontrolled inputs don't fire onChange for untouched fields; sync state after each save
+  useEffect(() => {
+    setHomeVal(prediction?.predicted_home_score?.toString() ?? '')
+    setAwayVal(prediction?.predicted_away_score?.toString() ?? '')
+    setPenaltyVal(prediction?.predicted_penalty_winner_team_id ?? '')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prediction?.updated_at])
+
+  // Reset penalty pick to saved value when tie is broken
+  useEffect(() => {
+    if (!showPenaltyPicker) setPenaltyVal(savedPenalty)
+  }, [showPenaltyPicker, savedPenalty])
 
   const penaltyPickTeam =
     prediction?.predicted_penalty_winner_team_id === match.home_team_id
@@ -92,6 +116,11 @@ export default function MatchCard({ match, prediction }: Props) {
     : isLocked
     ? 'bg-card border border-border border-l-[3px] border-l-amber-400/60 rounded-xl p-4 space-y-3 cursor-default'
     : 'bg-card border border-primary/30 border-l-[3px] border-l-primary rounded-xl p-4 space-y-3'
+
+  const isSaved = !!prediction && !isDirty
+  const buttonClass = isSaved
+    ? 'w-full bg-green-400/10 text-green-400 border border-green-400/30 hover:bg-green-400/10 cursor-default'
+    : 'w-full bg-primary text-primary-foreground hover:bg-primary/90'
 
   return (
     <div className={cardClass}>
@@ -200,9 +229,9 @@ export default function MatchCard({ match, prediction }: Props) {
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Penalty winner</Label>
               <select
-                key={`${homeVal}-${awayVal}`}
                 name="penaltyWinnerId"
-                defaultValue={prediction?.predicted_penalty_winner_team_id ?? ''}
+                value={penaltyVal}
+                onChange={e => setPenaltyVal(e.target.value)}
                 disabled={pending}
                 className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
               >
@@ -213,8 +242,20 @@ export default function MatchCard({ match, prediction }: Props) {
             </div>
           )}
 
-          <Button type="submit" disabled={pending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-            {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Prediction'}
+          <Button
+            type="submit"
+            disabled={pending || isSaved}
+            className={buttonClass}
+          >
+            {pending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : isSaved ? (
+              <><Check className="w-4 h-4" /><span>Saved</span></>
+            ) : prediction ? (
+              'Update Prediction'
+            ) : (
+              'Save Prediction'
+            )}
           </Button>
         </form>
       )}
