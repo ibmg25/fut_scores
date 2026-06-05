@@ -101,20 +101,7 @@ export default async function AdminResultsPage(props: {
           </h2>
           <div className="space-y-2">
             {finished.map((match) => (
-              <div
-                key={match.id}
-                className="bg-card border border-border rounded-xl p-3 flex items-center justify-between text-sm gap-3"
-              >
-                <span className="truncate">
-                  {match.home_team.name} {match.home_score}–{match.away_score} {match.away_team.name}
-                  {match.penalty_winner_team && (
-                    <span className="ml-2 text-muted-foreground">
-                      (pens: {match.penalty_winner_team.name})
-                    </span>
-                  )}
-                </span>
-                <FinalizeMatchForm key={`edit-${match.id}`} match={match} compact />
-              </div>
+              <FinalizeMatchForm key={`edit-${match.id}`} match={match} compact />
             ))}
           </div>
         </section>
