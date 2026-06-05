@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Fut Score — WC 2026 Predictor",
   description: "Predict FIFA World Cup 2026 match results and compete with friends",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
