@@ -3,14 +3,15 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const links = [
-  { href: '/admin/results', label: 'Match Results' },
-  { href: '/admin/users', label: 'Users' },
-  { href: '/admin/groups', label: 'Groups' },
+const ALL_LINKS = [
+  { href: '/admin/results', label: 'Match Results', superadminOnly: false },
+  { href: '/admin/users',   label: 'Users',         superadminOnly: true  },
+  { href: '/admin/groups',  label: 'Groups',        superadminOnly: false },
 ]
 
-export default function AdminNavLinks() {
+export default function AdminNavLinks({ isSuperadmin }: { isSuperadmin: boolean }) {
   const pathname = usePathname()
+  const links = ALL_LINKS.filter((l) => !l.superadminOnly || isSuperadmin)
 
   return (
     <nav className="flex items-center gap-1 text-sm">

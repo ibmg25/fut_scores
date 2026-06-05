@@ -4,7 +4,7 @@ export type MatchPhase =
   | 'r32' | 'r16' | 'qf' | 'sf' | 'third_place' | 'final'
 
 export type MatchStatus = 'pending' | 'finished'
-export type UserRole = 'user' | 'superadmin'
+export type UserRole = 'user' | 'admin' | 'superadmin'
 
 export interface Database {
   public: {
@@ -287,6 +287,10 @@ export interface Database {
         Returns: number
       }
       is_superadmin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_admin_or_above: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }

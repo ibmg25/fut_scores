@@ -6,6 +6,56 @@ import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { randomBytes } from 'crypto'
 
+const changeRoleSchema = z.object({
+  userId: z.string().uuid(),
+  role: z.enum(['user', 'admin']),
+})
+
+export async function changeRoleAction(
+  _prevState: { error: string | null },
+  formData: FormData
+): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const { data: profile } = await supabase
+    .from('users_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'superadmin') {
+    return { error: 'Permission denied.' }
+  }
+
+  const parsed = changeRoleSchema.safeParse({
+    userId: formData.get('userId'),
+    role: formData.get('role'),
+  })
+
+  if (!parsed.success) {
+    return { error: 'Invalid input.' }
+  }
+
+  if (parsed.data.userId === user.id) {
+    return { error: 'Cannot change your own role.' }
+  }
+
+  const adminClient = createAdminClient()
+  const { error: updateError } = await adminClient
+    .from('users_profiles')
+    .update({ role: parsed.data.role })
+    .eq('id', parsed.data.userId)
+
+  if (updateError) {
+    return { error: updateError.message }
+  }
+
+  revalidatePath('/admin/users')
+  return { error: null }
+}
+
 const schema = z.object({
   email: z.string().email(),
   displayName: z.string().min(2).max(50).trim(),

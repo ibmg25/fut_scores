@@ -23,3 +23,12 @@ export async function requireSuperadmin(): Promise<UserProfile> {
   }
   return profile!
 }
+
+export async function requireAdminOrAbove(): Promise<UserProfile> {
+  const profile = await getUserProfile()
+  if (!profile || (profile.role !== 'superadmin' && profile.role !== 'admin')) {
+    const { redirect } = await import('next/navigation')
+    redirect('/matches')
+  }
+  return profile!
+}

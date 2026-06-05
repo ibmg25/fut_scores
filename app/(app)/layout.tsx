@@ -7,7 +7,7 @@ import NavLinks from '@/components/features/NavLinks'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getUserProfile()
-  const isAdmin = profile?.role === 'superadmin'
+  const isAdmin = profile?.role === 'superadmin' || profile?.role === 'admin'
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

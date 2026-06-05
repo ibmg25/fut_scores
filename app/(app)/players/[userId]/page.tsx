@@ -109,10 +109,10 @@ export default async function PlayerPage({
 
   if (!targetProfile) notFound()
 
-  const isSuperadmin = viewerProfile?.role === 'superadmin'
+  const isAdminOrAbove = viewerProfile?.role === 'superadmin' || viewerProfile?.role === 'admin'
   const isOwnProfile = userId === user.id
 
-  if (!isSuperadmin && !isOwnProfile) {
+  if (!isAdminOrAbove && !isOwnProfile) {
     const { data: viewerGroups } = await supabase
       .from('group_members')
       .select('group_id')

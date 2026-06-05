@@ -54,7 +54,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // Admin guard
-    if (pathname.startsWith('/admin') && profile?.role !== 'superadmin') {
+    if (pathname.startsWith('/admin') && profile?.role !== 'superadmin' && profile?.role !== 'admin') {
       return NextResponse.redirect(new URL('/matches', request.url))
     }
   }

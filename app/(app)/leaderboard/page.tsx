@@ -18,7 +18,7 @@ export default async function LeaderboardPage(props: {
     .eq('id', user.id)
     .single()
 
-  const isSuperadmin = profile?.role === 'superadmin'
+  const isAdminOrAbove = profile?.role === 'superadmin' || profile?.role === 'admin'
 
   // Fetch the user's group memberships
   const { data: memberships } = await supabase
@@ -39,7 +39,7 @@ export default async function LeaderboardPage(props: {
   }
 
   // Non-admin with no groups: nothing to show
-  if (!isSuperadmin && userGroups.length === 0) {
+  if (!isAdminOrAbove && userGroups.length === 0) {
     return (
       <div>
         <h1 className="text-2xl font-bold mb-6">Leaderboard</h1>
@@ -56,7 +56,7 @@ export default async function LeaderboardPage(props: {
   const selectedGroupId = group && userGroups.some((g) => g.id === group) ? group : null
 
   // Non-admins fall back to their first group when no valid group param is present
-  const effectiveGroupId = selectedGroupId ?? (isSuperadmin ? null : (userGroups[0]?.id ?? null))
+  const effectiveGroupId = selectedGroupId ?? (isAdminOrAbove ? null : (userGroups[0]?.id ?? null))
 
   // Fetch leaderboard data: group-specific or global
   const profilesQuery = effectiveGroupId
@@ -82,7 +82,7 @@ export default async function LeaderboardPage(props: {
     return (
       <div>
         <h1 className="text-2xl font-bold mb-6">Leaderboard</h1>
-        <GroupSelector groups={userGroups} selectedGroupId={effectiveGroupId} showAllPlayers={isSuperadmin} />
+        <GroupSelector groups={userGroups} selectedGroupId={effectiveGroupId} showAllPlayers={isAdminOrAbove} />
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
           <span className="text-5xl">🏆</span>
           <p className="text-lg font-semibold">No scores yet.</p>
@@ -99,7 +99,7 @@ export default async function LeaderboardPage(props: {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Leaderboard</h1>
-      <GroupSelector groups={userGroups} selectedGroupId={effectiveGroupId} showAllPlayers={isSuperadmin} />
+      <GroupSelector groups={userGroups} selectedGroupId={effectiveGroupId} showAllPlayers={isAdminOrAbove} />
       <PodiumSection top3={top3} />
       <RankingList
         entries={rest}
