@@ -27,7 +27,7 @@ export default function MatchesByPhase({ matches, predictions }: Props) {
 
   return (
     <Tabs defaultValue={phases[0]}>
-      <TabsList className="flex flex-nowrap overflow-x-auto h-auto gap-1 mb-0 w-full justify-start">
+      <TabsList className="flex flex-nowrap overflow-x-auto overflow-y-hidden h-auto gap-1 mb-0 w-full justify-start">
         {phases.map((phase) => (
           <TabsTrigger key={phase} value={phase} className="text-xs shrink-0 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary">
             {PHASE_LABELS[phase]}
