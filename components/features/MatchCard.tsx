@@ -35,20 +35,40 @@ function StatusBadge({ match }: { match: MatchWithTeams }) {
 
 function PointsBadge({ points }: { points: number }) {
   const colorClass =
-    points >= 13 ? 'text-yellow-300'
-    : points === 10 ? 'text-green-400'
-    : points === 8  ? 'text-emerald-300'
-    : points === 5  ? 'text-emerald-400'
-    : points === 2  ? 'text-yellow-400'
-    : 'text-muted-foreground'
-  return <span className={`font-semibold ${colorClass}`}>{points} pts</span>
+    points >= 13 ? 'text-yellow-300 bg-yellow-300/10'
+    : points === 10 ? 'text-green-400 bg-green-400/10'
+    : points === 8  ? 'text-emerald-300 bg-emerald-300/10'
+    : points === 5  ? 'text-emerald-400 bg-emerald-400/10'
+    : points === 2  ? 'text-yellow-400 bg-yellow-400/10'
+    : 'text-muted-foreground bg-muted/50'
+  return (
+    <span className={`inline-flex items-center font-semibold text-xs px-2 py-0.5 rounded-md ${colorClass}`}>
+      {points} pts
+    </span>
+  )
+}
+
+function TeamFlag({ url, name }: { url: string | null; name: string }) {
+  if (!url) return null
+  return (
+    <Image
+      src={url}
+      alt={name}
+      width={32}
+      height={24}
+      className="rounded-sm shrink-0 w-8 h-6"
+      unoptimized
+    />
+  )
 }
 
 const initialState = { error: null as string | null, success: false }
 
 export default function MatchCard({ match, prediction }: Props) {
   const [state, action, pending] = useActionState(upsertPrediction, initialState)
-  const locked = match.status === 'finished' || isPredictionLocked(match.kickoff_time)
+  const isFinished = match.status === 'finished'
+  const locked = isFinished || isPredictionLocked(match.kickoff_time)
+  const isLocked = locked && !isFinished
   const isKnockout = match.is_knockout
 
   const [homeVal, setHomeVal] = useState(prediction?.predicted_home_score?.toString() ?? '')
@@ -67,45 +87,15 @@ export default function MatchCard({ match, prediction }: Props) {
       ? match.away_team
       : null
 
-  const teamsRow = (scoreCenter: React.ReactNode) => (
-    <div className="flex items-center gap-3">
-      {/* Home team */}
-      <div className="flex-1 flex items-center gap-2 min-w-0">
-        {match.home_team.flag_url && (
-          <Image
-            src={match.home_team.flag_url}
-            alt={match.home_team.name}
-            width={32}
-            height={24}
-            className="rounded-sm shrink-0 w-8 h-6"
-            unoptimized
-          />
-        )}
-        <span className="text-sm font-semibold truncate">{match.home_team.name}</span>
-      </div>
-
-      {scoreCenter}
-
-      {/* Away team */}
-      <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
-        <span className="text-sm font-semibold truncate text-right">{match.away_team.name}</span>
-        {match.away_team.flag_url && (
-          <Image
-            src={match.away_team.flag_url}
-            alt={match.away_team.name}
-            width={32}
-            height={24}
-            className="rounded-sm shrink-0 w-8 h-6"
-            unoptimized
-          />
-        )}
-      </div>
-    </div>
-  )
+  const cardClass = isFinished
+    ? 'bg-card border border-border rounded-xl p-4 space-y-3'
+    : isLocked
+    ? 'bg-card border border-border border-l-[3px] border-l-amber-400/60 rounded-xl p-4 space-y-3 cursor-default'
+    : 'bg-card border border-primary/30 border-l-[3px] border-l-primary rounded-xl p-4 space-y-3'
 
   return (
-    <div className={`bg-card border border-border rounded-xl p-4 space-y-3 ${locked ? 'opacity-75 cursor-default' : ''}`}>
-      {/* Header row */}
+    <div className={cardClass}>
+      {/* Header */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <LocalKickoffTime isoString={match.kickoff_time} />
         <StatusBadge match={match} />
@@ -113,34 +103,41 @@ export default function MatchCard({ match, prediction }: Props) {
 
       {locked ? (
         <>
-          {teamsRow(
-            match.status === 'finished' ? (
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-2xl font-bold">{match.home_score}</span>
-                <span className="text-muted-foreground text-lg">–</span>
-                <span className="text-2xl font-bold">{match.away_score}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 shrink-0">
-                <div className="w-12 h-12 flex items-center justify-center rounded-md border border-border bg-muted text-xl font-bold text-muted-foreground">
+          {/* Stacked team rows — locked/finished display */}
+          <div className="space-y-1.5">
+            {/* Home row */}
+            <div className="flex items-center gap-2">
+              <TeamFlag url={match.home_team.flag_url} name={match.home_team.name} />
+              <span className="flex-1 text-sm font-semibold min-w-0">{match.home_team.name}</span>
+              {isFinished ? (
+                <span className="text-2xl font-bold tabular-nums shrink-0">{match.home_score}</span>
+              ) : (
+                <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-md border border-border bg-muted text-lg font-bold tabular-nums text-muted-foreground">
                   {prediction?.predicted_home_score ?? '–'}
                 </div>
-                <span className="text-muted-foreground text-sm">–</span>
-                <div className="w-12 h-12 flex items-center justify-center rounded-md border border-border bg-muted text-xl font-bold text-muted-foreground">
+              )}
+            </div>
+
+            {/* Away row */}
+            <div className="flex items-center gap-2">
+              <TeamFlag url={match.away_team.flag_url} name={match.away_team.name} />
+              <span className="flex-1 text-sm font-semibold min-w-0">{match.away_team.name}</span>
+              {isFinished ? (
+                <span className="text-2xl font-bold tabular-nums shrink-0">{match.away_score}</span>
+              ) : (
+                <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-md border border-border bg-muted text-lg font-bold tabular-nums text-muted-foreground">
                   {prediction?.predicted_away_score ?? '–'}
                 </div>
-              </div>
-            )
-          )}
-
-          {/* Prediction result for finished matches */}
-          {match.status === 'finished' && prediction && (
-            <div className="text-xs text-muted-foreground text-center">
-              Your pick: {prediction.predicted_home_score}–{prediction.predicted_away_score}
-              {isKnockout && penaltyPickTeam && (
-                <> ({penaltyPickTeam.name} wins pens)</>
               )}
-              {' · '}
+            </div>
+          </div>
+
+          {/* Prediction summary for finished matches */}
+          {isFinished && prediction && (
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span>Your pick: {prediction.predicted_home_score}–{prediction.predicted_away_score}
+                {isKnockout && penaltyPickTeam && <> ({penaltyPickTeam.name} wins pens)</>}
+              </span>
               <PointsBadge points={prediction.points_earned} />
             </div>
           )}
@@ -149,8 +146,12 @@ export default function MatchCard({ match, prediction }: Props) {
         <form key={prediction?.updated_at ?? `new-${match.id}`} action={action} className="space-y-3">
           <input type="hidden" name="matchId" value={match.id} />
 
-          {teamsRow(
-            <div className="flex items-center gap-1.5 shrink-0">
+          {/* Stacked team rows — prediction inputs */}
+          <div className="space-y-2">
+            {/* Home row */}
+            <div className="flex items-center gap-2">
+              <TeamFlag url={match.home_team.flag_url} name={match.home_team.name} />
+              <span className="flex-1 text-sm font-semibold min-w-0">{match.home_team.name}</span>
               <Input
                 name="homeScore"
                 type="number"
@@ -159,11 +160,27 @@ export default function MatchCard({ match, prediction }: Props) {
                 max={99}
                 defaultValue={prediction?.predicted_home_score ?? ''}
                 disabled={pending}
-                className="w-12 h-12 text-center px-1 text-xl"
+                className="w-12 h-10 shrink-0 text-center px-1 text-lg font-mono tabular-nums"
                 placeholder="0"
                 onChange={e => setHomeVal(e.target.value)}
               />
-              <span className="text-muted-foreground text-sm">–</span>
+            </div>
+
+            {/* vs divider */}
+            <div className="flex items-center gap-2">
+              <div className="w-8 shrink-0" />
+              <div className="flex-1 flex items-center gap-2">
+                <div className="flex-1 h-px bg-border/40" />
+                <span className="text-[10px] text-muted-foreground/50 tracking-widest uppercase font-light">vs</span>
+                <div className="flex-1 h-px bg-border/40" />
+              </div>
+              <div className="w-12 shrink-0" />
+            </div>
+
+            {/* Away row */}
+            <div className="flex items-center gap-2">
+              <TeamFlag url={match.away_team.flag_url} name={match.away_team.name} />
+              <span className="flex-1 text-sm font-semibold min-w-0">{match.away_team.name}</span>
               <Input
                 name="awayScore"
                 type="number"
@@ -172,12 +189,12 @@ export default function MatchCard({ match, prediction }: Props) {
                 max={99}
                 defaultValue={prediction?.predicted_away_score ?? ''}
                 disabled={pending}
-                className="w-12 h-12 text-center px-1 text-xl"
+                className="w-12 h-10 shrink-0 text-center px-1 text-lg font-mono tabular-nums"
                 placeholder="0"
                 onChange={e => setAwayVal(e.target.value)}
               />
             </div>
-          )}
+          </div>
 
           {showPenaltyPicker && (
             <div className="space-y-1.5">
