@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireSuperadmin } from '@/lib/auth/get-user-profile'
 import CreateUserForm from './create-user-form'
 import ResetPasswordDialog from './reset-password-dialog'
+import ChangeRoleForm from './change-role-form'
 import {
   Table,
   TableBody,
@@ -12,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 
 export default async function AdminUsersPage() {
+  await requireSuperadmin()
   const adminClient = createAdminClient()
 
   const [{ data: profiles }, { data: authUsers }] = await Promise.all([
@@ -61,9 +64,13 @@ export default async function AdminUsersPage() {
                     </TableCell>
                     <TableCell>
                       {p.role === 'superadmin' ? (
-                        <Badge>Admin</Badge>
+                        <Badge>Superadmin</Badge>
                       ) : (
-                        <Badge variant="secondary">User</Badge>
+                        <ChangeRoleForm
+                          key={p.role}
+                          userId={p.id}
+                          currentRole={p.role as 'user' | 'admin'}
+                        />
                       )}
                     </TableCell>
                     <TableCell className="text-right">{p.total_points}</TableCell>

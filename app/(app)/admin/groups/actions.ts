@@ -14,7 +14,7 @@ const memberSchema = z.object({
   userId: z.string().uuid(),
 })
 
-async function checkSuperadmin() {
+async function checkAdminOrAbove() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -23,7 +23,7 @@ async function checkSuperadmin() {
     .select('role')
     .eq('id', user.id)
     .single()
-  if (profile?.role !== 'superadmin') return null
+  if (profile?.role !== 'superadmin' && profile?.role !== 'admin') return null
   return user
 }
 
@@ -31,7 +31,7 @@ export async function createGroupAction(
   _prevState: { error: string | null },
   formData: FormData
 ): Promise<{ error: string | null }> {
-  const user = await checkSuperadmin()
+  const user = await checkAdminOrAbove()
   if (!user) return { error: 'Permission denied.' }
 
   const parsed = createGroupSchema.safeParse({ name: formData.get('name') })
@@ -54,7 +54,7 @@ export async function addMemberAction(
   _prevState: { error: string | null },
   formData: FormData
 ): Promise<{ error: string | null }> {
-  const user = await checkSuperadmin()
+  const user = await checkAdminOrAbove()
   if (!user) return { error: 'Permission denied.' }
 
   const parsed = memberSchema.safeParse({
@@ -78,7 +78,7 @@ export async function removeMemberAction(
   _prevState: { error: string | null },
   formData: FormData
 ): Promise<{ error: string | null }> {
-  const user = await checkSuperadmin()
+  const user = await checkAdminOrAbove()
   if (!user) return { error: 'Permission denied.' }
 
   const parsed = memberSchema.safeParse({

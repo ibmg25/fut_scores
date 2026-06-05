@@ -108,7 +108,7 @@ describe('scorePrediction', () => {
       }))).toBe(2)
     })
 
-    it('awards 0 for predicting tie in knockout where home won on penalties', () => {
+    it('awards 10 for predicting exact score in knockout where home won on penalties', () => {
       // predicted tie 1-1, official 1-1 pens home — predicted "tie" outcome but actual outcome is "home"
       expect(scorePrediction(make({
         predictedHome: 1, predictedAway: 1,
@@ -128,7 +128,7 @@ describe('scorePrediction', () => {
       }))).toBe(0)
     })
 
-    it('awards 0 for predicting tie outcome in knockout where team advanced via pens', () => {
+    it('awards 5 for predicting same goal difference in knockout where away team advanced via pens', () => {
       // predicted 2-2 tie, official 0-0 pens away — diff matches (both 0) → tier 2: 5 points
       expect(scorePrediction(make({
         predictedHome: 2, predictedAway: 2,

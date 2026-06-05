@@ -28,12 +28,15 @@ export default function BottomNav({ isAdmin }: Props) {
           <Link
             key={href}
             href={href}
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] min-w-[44px] transition-colors ${
+            className={`relative flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] min-w-[44px] transition-colors ${
               active ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
-            <Icon className="w-5 h-5" />
-            <span className="text-xs">{label}</span>
+            {active && (
+              <span className="absolute inset-x-2 inset-y-1 bg-primary/10 rounded-lg -z-10" />
+            )}
+            <Icon className="w-[22px] h-[22px]" />
+            <span className={`text-xs ${active ? 'font-medium' : ''}`}>{label}</span>
           </Link>
         )
       })}

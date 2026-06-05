@@ -1,20 +1,25 @@
 import Link from 'next/link'
+import { Trophy } from 'lucide-react'
 import { getUserProfile } from '@/lib/auth/get-user-profile'
 import SignOutButton from '@/components/features/SignOutButton'
 import BottomNav from '@/components/features/BottomNav'
+import NavLinks from '@/components/features/NavLinks'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getUserProfile()
-  const isAdmin = profile?.role === 'superadmin'
+  const isAdmin = profile?.role === 'superadmin' || profile?.role === 'admin'
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Mobile top bar */}
       <header className="md:hidden bg-card border-b border-border sticky top-0 z-10">
-        <div className="flex items-center justify-between h-12 px-4">
-          <span className="font-bold text-base text-primary">⚽ Fut Score</span>
+        <div className="flex items-center justify-between h-14 px-4">
+          <Link href="/matches" className="flex items-center gap-2 font-bold text-base text-primary">
+            <Trophy className="w-5 h-5" />
+            FutScore
+          </Link>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{profile?.display_name}</span>
+            <span className="text-xs font-medium text-muted-foreground">{profile?.display_name}</span>
             <SignOutButton />
           </div>
         </div>
@@ -22,27 +27,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Desktop top navbar */}
       <nav className="hidden md:block bg-card border-b border-border sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 flex items-center justify-between h-14">
+        <div className="max-w-4xl mx-auto px-4 flex items-center justify-between h-16">
           <div className="flex items-center gap-6">
-            <Link href="/matches" className="font-bold text-lg tracking-tight text-primary">
-              ⚽ Fut Score
+            <Link href="/matches" className="flex items-center gap-2 font-bold text-lg tracking-tight text-primary">
+              <Trophy className="w-5 h-5" />
+              FutScore
             </Link>
-            <div className="flex items-center gap-4 text-sm font-medium">
-              <Link href="/matches" className="text-muted-foreground hover:text-foreground transition-colors">
-                Matches
-              </Link>
-              <Link href="/leaderboard" className="text-muted-foreground hover:text-foreground transition-colors">
-                Leaderboard
-              </Link>
-              {isAdmin && (
-                <Link href="/admin" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Admin
-                </Link>
-              )}
-            </div>
+            <NavLinks isAdmin={isAdmin} />
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{profile?.display_name}</span>
+            <span className="text-sm font-medium text-muted-foreground">{profile?.display_name}</span>
             <SignOutButton />
           </div>
         </div>
