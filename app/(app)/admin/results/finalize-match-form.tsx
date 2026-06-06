@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
 import { finalizeMatchAction } from './actions'
@@ -58,6 +58,15 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
   const [state, formAction, pending] = useActionState(finalizeMatchAction, initialState)
   const isKnockout = match.is_knockout
 
+  const [penaltyWinner, setPenaltyWinner] = useState<string>(
+    match.penalty_winner_team_id ?? ''
+  )
+
+  const penaltyLabel =
+    penaltyWinner === match.home_team_id ? match.home_team.name
+    : penaltyWinner === match.away_team_id ? match.away_team.name
+    : null
+
   if (compact) {
     return (
       <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -110,9 +119,15 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
             className="w-12 h-7 text-center px-1 text-sm font-mono tabular-nums"
           />
           {isKnockout ? (
-            <Select name="penaltyWinnerId" defaultValue={match.penalty_winner_team_id ?? ''}>
+            <Select
+              name="penaltyWinnerId"
+              value={penaltyWinner}
+              onValueChange={setPenaltyWinner}
+            >
               <SelectTrigger className="h-7 flex-1 min-w-[100px] text-xs">
-                <SelectValue placeholder="No pens" />
+                {penaltyLabel
+                  ? <span className="flex-1 text-left">{penaltyLabel}</span>
+                  : <SelectValue placeholder="No pens" />}
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">No pens</SelectItem>
@@ -202,9 +217,15 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
         {isKnockout && (
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Penalty winner (if applicable)</Label>
-            <Select name="penaltyWinnerId" defaultValue={match.penalty_winner_team_id ?? ''}>
+            <Select
+              name="penaltyWinnerId"
+              value={penaltyWinner}
+              onValueChange={setPenaltyWinner}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="No penalties" />
+                {penaltyLabel
+                  ? <span className="flex-1 text-left text-sm">{penaltyLabel}</span>
+                  : <SelectValue placeholder="No penalties" />}
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">No penalties</SelectItem>

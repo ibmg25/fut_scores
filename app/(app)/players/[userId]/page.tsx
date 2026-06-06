@@ -101,7 +101,7 @@ export default async function PlayerPage({
   const [{ data: viewerProfile }, { data: targetProfile }] = await Promise.all([
     supabase.from('users_profiles').select('role').eq('id', user.id).single(),
     supabase
-      .from('users_profiles')
+      .from('v_leaderboard')
       .select('id, display_name, total_points, exact_results_count')
       .eq('id', userId)
       .single(),
