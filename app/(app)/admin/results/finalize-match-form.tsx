@@ -122,7 +122,7 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
             <Select
               name="penaltyWinnerId"
               value={penaltyWinner}
-              onValueChange={setPenaltyWinner}
+              onValueChange={(v) => setPenaltyWinner(v ?? '')}
             >
               <SelectTrigger className="h-7 flex-1 min-w-[100px] text-xs">
                 {penaltyLabel
@@ -220,7 +220,7 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
             <Select
               name="penaltyWinnerId"
               value={penaltyWinner}
-              onValueChange={setPenaltyWinner}
+              onValueChange={(v) => setPenaltyWinner(v ?? '')}
             >
               <SelectTrigger>
                 {penaltyLabel
