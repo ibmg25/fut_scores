@@ -117,6 +117,7 @@ export default function MatchCard({ match, prediction }: Props) {
     ? 'bg-card border border-border border-l-[3px] border-l-amber-400/60 rounded-xl p-4 space-y-3 cursor-default'
     : 'bg-card border border-primary/30 border-l-[3px] border-l-primary rounded-xl p-4 space-y-3'
 
+  const canSave = homeVal !== '' && awayVal !== ''
   const isSaved = !!prediction && !isDirty
   const buttonClass = isSaved
     ? 'w-full bg-green-400/10 text-green-400 border border-green-400/30 hover:bg-green-400/10 cursor-default'
@@ -190,7 +191,7 @@ export default function MatchCard({ match, prediction }: Props) {
                 defaultValue={prediction?.predicted_home_score ?? ''}
                 disabled={pending}
                 className="w-12 h-10 shrink-0 text-center px-1 text-lg font-mono tabular-nums"
-                placeholder="0"
+                placeholder="–"
                 onChange={e => setHomeVal(e.target.value)}
               />
             </div>
@@ -219,7 +220,7 @@ export default function MatchCard({ match, prediction }: Props) {
                 defaultValue={prediction?.predicted_away_score ?? ''}
                 disabled={pending}
                 className="w-12 h-10 shrink-0 text-center px-1 text-lg font-mono tabular-nums"
-                placeholder="0"
+                placeholder="–"
                 onChange={e => setAwayVal(e.target.value)}
               />
             </div>
@@ -244,7 +245,7 @@ export default function MatchCard({ match, prediction }: Props) {
 
           <Button
             type="submit"
-            disabled={pending || isSaved}
+            disabled={pending || isSaved || !canSave}
             className={buttonClass}
           >
             {pending ? (
