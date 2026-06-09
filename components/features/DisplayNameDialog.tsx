@@ -49,7 +49,7 @@ function UpdateForm({
           name="displayName"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          maxLength={50}
+          maxLength={12}
           autoComplete="off"
         />
       </div>

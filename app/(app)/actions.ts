@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
 const schema = z.object({
-  displayName: z.string().min(2).max(50).trim(),
+  displayName: z.string().min(2).max(12).trim(),
 })
 
 export async function updateDisplayNameAction(

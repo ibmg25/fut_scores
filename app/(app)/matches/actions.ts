@@ -6,8 +6,8 @@ import { z } from 'zod'
 
 const schema = z.object({
   matchId: z.string().uuid(),
-  homeScore: z.coerce.number().int().min(0),
-  awayScore: z.coerce.number().int().min(0),
+  homeScore: z.coerce.number().int().min(0).max(99),
+  awayScore: z.coerce.number().int().min(0).max(99),
   penaltyWinnerId: z.preprocess(
     v => (!v ? null : v),
     z.string().uuid().nullable().optional()

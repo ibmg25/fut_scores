@@ -184,15 +184,15 @@ export default function MatchCard({ match, prediction }: Props) {
               <span className="flex-1 text-sm font-semibold min-w-0">{match.home_team.name}</span>
               <Input
                 name="homeScore"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={0}
-                max={99}
-                defaultValue={prediction?.predicted_home_score ?? ''}
+                pattern="[0-9]*"
+                maxLength={2}
+                value={homeVal}
                 disabled={pending}
                 className="w-12 h-10 shrink-0 text-center px-1 text-lg font-mono tabular-nums"
                 placeholder="–"
-                onChange={e => setHomeVal(e.target.value)}
+                onChange={e => setHomeVal(e.target.value.replace(/\D/g, '').slice(0, 2))}
               />
             </div>
 
@@ -213,15 +213,15 @@ export default function MatchCard({ match, prediction }: Props) {
               <span className="flex-1 text-sm font-semibold min-w-0">{match.away_team.name}</span>
               <Input
                 name="awayScore"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={0}
-                max={99}
-                defaultValue={prediction?.predicted_away_score ?? ''}
+                pattern="[0-9]*"
+                maxLength={2}
+                value={awayVal}
                 disabled={pending}
                 className="w-12 h-10 shrink-0 text-center px-1 text-lg font-mono tabular-nums"
                 placeholder="–"
-                onChange={e => setAwayVal(e.target.value)}
+                onChange={e => setAwayVal(e.target.value.replace(/\D/g, '').slice(0, 2))}
               />
             </div>
           </div>
