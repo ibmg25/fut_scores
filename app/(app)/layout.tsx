@@ -4,6 +4,7 @@ import { getUserProfile } from '@/lib/auth/get-user-profile'
 import SignOutButton from '@/components/features/SignOutButton'
 import BottomNav from '@/components/features/BottomNav'
 import NavLinks from '@/components/features/NavLinks'
+import DisplayNameDialog from '@/components/features/DisplayNameDialog'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getUserProfile()
@@ -19,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             FutScore
           </Link>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">{profile?.display_name}</span>
+            <DisplayNameDialog displayName={profile?.display_name ?? ''} />
             <SignOutButton />
           </div>
         </div>
@@ -36,7 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <NavLinks isAdmin={isAdmin} />
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">{profile?.display_name}</span>
+            <DisplayNameDialog displayName={profile?.display_name ?? ''} />
             <SignOutButton />
           </div>
         </div>
