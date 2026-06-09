@@ -103,20 +103,24 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
           <input type="hidden" name="matchId" value={match.id} />
           <Input
             name="homeScore"
-            type="number"
+            type="text"
             inputMode="numeric"
-            min={0}
-            defaultValue={match.home_score ?? 0}
+            pattern="[0-9]*"
+            maxLength={2}
+            defaultValue={match.home_score?.toString() ?? ''}
             className="w-12 h-7 text-center px-1 text-sm font-mono tabular-nums"
+            onChange={(e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 2) }}
           />
           <span className="text-muted-foreground text-xs">–</span>
           <Input
             name="awayScore"
-            type="number"
+            type="text"
             inputMode="numeric"
-            min={0}
-            defaultValue={match.away_score ?? 0}
+            pattern="[0-9]*"
+            maxLength={2}
+            defaultValue={match.away_score?.toString() ?? ''}
             className="w-12 h-7 text-center px-1 text-sm font-mono tabular-nums"
+            onChange={(e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 2) }}
           />
           {isKnockout ? (
             <Select
@@ -174,13 +178,15 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
             score={
               <Input
                 name="homeScore"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={0}
-                defaultValue={match.home_score ?? ''}
+                pattern="[0-9]*"
+                maxLength={2}
+                defaultValue={match.home_score?.toString() ?? ''}
                 required
-                placeholder="0"
+                placeholder="–"
                 className="w-12 h-10 shrink-0 text-center px-1 text-lg font-mono tabular-nums"
+                onChange={(e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 2) }}
               />
             }
           />
@@ -202,13 +208,15 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
             score={
               <Input
                 name="awayScore"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={0}
-                defaultValue={match.away_score ?? ''}
+                pattern="[0-9]*"
+                maxLength={2}
+                defaultValue={match.away_score?.toString() ?? ''}
                 required
-                placeholder="0"
+                placeholder="–"
                 className="w-12 h-10 shrink-0 text-center px-1 text-lg font-mono tabular-nums"
+                onChange={(e) => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 2) }}
               />
             }
           />
