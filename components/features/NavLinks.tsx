@@ -11,6 +11,7 @@ export default function NavLinks({ isAdmin }: Props) {
   const pathname = usePathname()
 
   const links = [
+    { href: '/home', label: 'Home' },
     { href: '/matches', label: 'Matches' },
     { href: '/leaderboard', label: 'Leaderboard' },
     ...(isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),

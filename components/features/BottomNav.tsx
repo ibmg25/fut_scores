@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Trophy, BarChart3, Settings } from 'lucide-react'
+import { Home, Trophy, BarChart3, Settings } from 'lucide-react'
 
 interface Props {
   isAdmin: boolean
 }
 
 const navItems = [
+  { href: '/home', label: 'Home', icon: Home },
   { href: '/matches', label: 'Matches', icon: Trophy },
   { href: '/leaderboard', label: 'Leaderboard', icon: BarChart3 },
 ] as const

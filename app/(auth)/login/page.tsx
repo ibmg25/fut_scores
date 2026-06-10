@@ -6,7 +6,7 @@ import LoginForm from './login-form'
 export default async function LoginPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user) redirect('/matches')
+  if (user) redirect('/home')
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-background px-4 overflow-hidden">
