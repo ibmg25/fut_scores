@@ -29,5 +29,5 @@ export async function loginAction(
     return { error: 'Invalid email or password.' }
   }
 
-  redirect('/matches')
+  redirect('/home')
 }
