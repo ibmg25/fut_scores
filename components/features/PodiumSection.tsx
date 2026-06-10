@@ -7,6 +7,7 @@ interface LeaderboardEntry {
   display_name: string
   total_points: number
   exact_results_count: number
+  rank: number
 }
 
 interface Props {

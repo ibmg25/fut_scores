@@ -6,22 +6,22 @@ interface LeaderboardEntry {
   display_name: string
   total_points: number
   exact_results_count: number
+  rank: number
 }
 
 interface Props {
   entries: LeaderboardEntry[]
   currentUserId: string
-  startRank: number
   currentUserInTop3: boolean
 }
 
-export default function RankingList({ entries, currentUserId, startRank, currentUserInTop3 }: Props) {
+export default function RankingList({ entries, currentUserId, currentUserInTop3 }: Props) {
   if (entries.length === 0 && !currentUserInTop3) return null
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       {entries.map((entry, index) => {
-        const rank = startRank + index
+        const rank = entry.rank
         const isCurrentUser = entry.id === currentUserId
         return (
           <Link
