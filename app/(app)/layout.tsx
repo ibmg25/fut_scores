@@ -5,6 +5,7 @@ import SignOutButton from '@/components/features/SignOutButton'
 import BottomNav from '@/components/features/BottomNav'
 import NavLinks from '@/components/features/NavLinks'
 import DisplayNameDialog from '@/components/features/DisplayNameDialog'
+import InfoDialog from '@/components/features/InfoDialog'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getUserProfile()
@@ -21,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </Link>
           <div className="flex items-center gap-2">
             <DisplayNameDialog displayName={profile?.display_name ?? ''} />
+            <InfoDialog />
             <SignOutButton />
           </div>
         </div>
@@ -38,6 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
           <div className="flex items-center gap-3">
             <DisplayNameDialog displayName={profile?.display_name ?? ''} />
+            <InfoDialog />
             <SignOutButton />
           </div>
         </div>
