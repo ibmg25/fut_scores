@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -16,9 +16,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Fut Score — WC 2026 Predictor",
   description: "Predict FIFA World Cup 2026 match results and compete with friends",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: "/favicon.svg",
+    apple: "/favicon.svg",
   },
+  appleWebApp: {
+    capable: true,
+    title: "FutScore",
+    statusBarStyle: "black",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
