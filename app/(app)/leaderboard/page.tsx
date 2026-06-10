@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import PodiumSection from '@/components/features/PodiumSection'
 import RankingList from '@/components/features/RankingList'
 import GroupSelector from '@/components/features/GroupSelector'
+import { computeCompetitionRanks } from '@/lib/scoring/compute-ranks'
 
 export default async function LeaderboardPage(props: {
   searchParams: Promise<{ group?: string }>
@@ -76,35 +77,35 @@ export default async function LeaderboardPage(props: {
 
   const { data: profiles } = await profilesQuery
 
-  const hasScores = profiles && profiles.some((p) => p.total_points > 0)
-
-  if (!profiles || profiles.length === 0 || !hasScores) {
+  if (!profiles || profiles.length === 0) {
     return (
       <div>
         <h1 className="text-2xl font-bold mb-6">Leaderboard</h1>
         <GroupSelector groups={userGroups} selectedGroupId={effectiveGroupId} showAllPlayers={isAdminOrAbove} />
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
           <span className="text-5xl">🏆</span>
-          <p className="text-lg font-semibold">No scores yet.</p>
-          <p className="text-sm text-muted-foreground">Check back after the first matches are finalized.</p>
+          <p className="text-lg font-semibold">No participants yet.</p>
+          <p className="text-sm text-muted-foreground">Check back once players have joined.</p>
         </div>
       </div>
     )
   }
 
-  const top3 = profiles.slice(0, 3)
-  const rest = profiles.slice(3)
-  const currentUserInTop3 = top3.some((p) => p.id === user.id)
+  const rankedProfiles = computeCompetitionRanks(profiles)
+  const anyoneHasScored = rankedProfiles[0].total_points > 0
+
+  const top3 = rankedProfiles.slice(0, 3)
+  const rest = anyoneHasScored ? rankedProfiles.slice(3) : rankedProfiles
+  const currentUserInTop3 = anyoneHasScored && top3.some((p) => p.id === user.id)
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Leaderboard</h1>
       <GroupSelector groups={userGroups} selectedGroupId={effectiveGroupId} showAllPlayers={isAdminOrAbove} />
-      <PodiumSection top3={top3} />
+      {anyoneHasScored && <PodiumSection top3={top3} />}
       <RankingList
         entries={rest}
         currentUserId={user.id}
-        startRank={4}
         currentUserInTop3={currentUserInTop3}
       />
     </div>
