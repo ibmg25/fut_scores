@@ -23,6 +23,7 @@ export default function PlayerAvatar({ displayName, rank, size = 'md' }: Props) 
 
   return (
     <div
+      translate="no"
       className={`${sizeStyle} ${ringStyle} rounded-full flex items-center justify-center font-bold text-foreground shrink-0`}
     >
       {initial}
