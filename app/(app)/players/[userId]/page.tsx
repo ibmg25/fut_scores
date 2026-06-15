@@ -5,8 +5,9 @@ import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PlayerAvatar from '@/components/features/PlayerAvatar'
 import LocalKickoffTime from '@/components/features/LocalKickoffTime'
-import { PHASE_LABELS, PHASE_ORDER } from '@/lib/match-phases'
-import type { MatchWithTeams, Prediction, MatchPhase } from '@/lib/supabase/types'
+import type { MatchWithTeams, Prediction } from '@/lib/supabase/types'
+
+const ITEMS_PER_PAGE = 15
 
 function PointsBadge({ points }: { points: number }) {
   const colorClass =
@@ -90,10 +91,15 @@ function PredictionResultCard({ match, prediction }: PredictionResultCardProps) 
 
 export default async function PlayerPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ userId: string }>
+  searchParams: Promise<{ page?: string }>
 }) {
   const { userId } = await params
+  const { page: pageParam } = await searchParams
+  const parsed = parseInt(pageParam || '1', 10)
+  const currentPage = isNaN(parsed) ? 1 : Math.max(1, parsed)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -160,9 +166,10 @@ export default async function PlayerPage({
   const predictionMap = new Map((predictions ?? []).map((p) => [p.match_id, p]))
   const matchesWithPredictions = (matches ?? []).filter((m) => predictionMap.has(m.id)) as MatchWithTeams[]
 
-  const phases = PHASE_ORDER.filter((phase) =>
-    matchesWithPredictions.some((m) => m.phase === phase)
-  )
+  const totalPages = Math.max(1, Math.ceil(matchesWithPredictions.length / ITEMS_PER_PAGE))
+  const safePage = Math.min(currentPage, totalPages)
+  if (currentPage !== safePage) redirect(`/players/${userId}?page=${safePage}`)
+  const pageMatches = matchesWithPredictions.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE)
 
   return (
     <div>
@@ -194,30 +201,43 @@ export default async function PlayerPage({
           <p className="text-sm text-muted-foreground">Check back after the first matches are finalized.</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {phases.map((phase) => {
-            const phaseMatches = matchesWithPredictions
-              .filter((m) => m.phase === phase)
-              .sort((a, b) => new Date(b.kickoff_time).getTime() - new Date(a.kickoff_time).getTime())
+        <>
+          <div className="space-y-3">
+            {pageMatches.map((match) => (
+              <PredictionResultCard
+                key={match.id}
+                match={match}
+                prediction={predictionMap.get(match.id)!}
+              />
+            ))}
+          </div>
 
-            return (
-              <div key={phase}>
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                  {PHASE_LABELS[phase as MatchPhase]}
-                </h2>
-                <div className="space-y-3">
-                  {phaseMatches.map((match) => (
-                    <PredictionResultCard
-                      key={match.id}
-                      match={match}
-                      prediction={predictionMap.get(match.id)!}
-                    />
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4">
+              {safePage > 1 ? (
+                <Link
+                  href={`/players/${userId}?page=${safePage - 1}`}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  ← Previous
+                </Link>
+              ) : <span />}
+
+              <span className="text-sm text-muted-foreground">
+                Page {safePage} of {totalPages}
+              </span>
+
+              {safePage < totalPages ? (
+                <Link
+                  href={`/players/${userId}?page=${safePage + 1}`}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Next →
+                </Link>
+              ) : <span />}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
