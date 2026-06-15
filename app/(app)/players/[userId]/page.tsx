@@ -98,7 +98,8 @@ export default async function PlayerPage({
 }) {
   const { userId } = await params
   const { page: pageParam } = await searchParams
-  const currentPage = Math.max(1, parseInt(pageParam ?? '1', 10))
+  const parsed = parseInt(pageParam || '1', 10)
+  const currentPage = isNaN(parsed) ? 1 : Math.max(1, parsed)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -167,6 +168,7 @@ export default async function PlayerPage({
 
   const totalPages = Math.max(1, Math.ceil(matchesWithPredictions.length / ITEMS_PER_PAGE))
   const safePage = Math.min(currentPage, totalPages)
+  if (currentPage !== safePage) redirect(`/players/${userId}?page=${safePage}`)
   const pageMatches = matchesWithPredictions.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE)
 
   return (
