@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PHASE_LABELS } from '@/lib/match-phases'
 import type { MatchWithTeams, Prediction } from '@/lib/supabase/types'
 
 interface Props {
@@ -127,7 +128,10 @@ export default function MatchCard({ match, prediction }: Props) {
     <div className={cardClass}>
       {/* Header */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <LocalKickoffTime isoString={match.kickoff_time} />
+        <div className="flex items-center gap-3">
+          <LocalKickoffTime isoString={match.kickoff_time} />
+          <span className="text-muted-foreground/60">{PHASE_LABELS[match.phase]}</span>
+        </div>
         <StatusBadge match={match} />
       </div>
 
