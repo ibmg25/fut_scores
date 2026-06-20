@@ -40,6 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# AI plan files (local only, never committed)
+# AI plan and prompt files (local only, never committed)
 plan*.md
+prompt*.md
 
