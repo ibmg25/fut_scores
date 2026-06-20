@@ -25,12 +25,13 @@ export default function EditKickoffForm({ matchId, kickoffTime }: Props) {
   const hiddenUtcRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (state.success) {
+    if (!state.success) return
+    const t = setTimeout(() => {
       setOpen(false)
       setSavedMsg(true)
-      const t = setTimeout(() => setSavedMsg(false), 2000)
-      return () => clearTimeout(t)
-    }
+      setTimeout(() => setSavedMsg(false), 2000)
+    }, 0)
+    return () => clearTimeout(t)
   }, [state.success])
 
   function handleSubmit() {

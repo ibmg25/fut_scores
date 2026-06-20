@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import LocalKickoffTime from '@/components/features/LocalKickoffTime'
+import EditKickoffForm from './edit-kickoff-form'
 import {
   Select,
   SelectContent,
@@ -72,7 +73,10 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-3 pb-2 text-xs text-muted-foreground">
-          <LocalKickoffTime isoString={match.kickoff_time} />
+          <div className="flex items-center gap-2">
+            <LocalKickoffTime isoString={match.kickoff_time} />
+            <EditKickoffForm matchId={match.id} kickoffTime={match.kickoff_time} />
+          </div>
           <Badge variant="secondary">Finished</Badge>
         </div>
 
@@ -161,7 +165,10 @@ export default function FinalizeMatchForm({ match, compact }: Props) {
     <div className="bg-card border border-amber-400/25 border-l-[3px] border-l-amber-400/70 rounded-xl p-4 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <LocalKickoffTime isoString={match.kickoff_time} />
+        <div className="flex items-center gap-2">
+          <LocalKickoffTime isoString={match.kickoff_time} />
+          <EditKickoffForm matchId={match.id} kickoffTime={match.kickoff_time} />
+        </div>
         <span className="bg-amber-400/10 text-amber-400 text-xs font-medium px-2 py-0.5 rounded-md capitalize">
           {match.phase.replace(/_/g, ' ')}
         </span>
