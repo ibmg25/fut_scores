@@ -4,6 +4,34 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
+const kickoffSchema = z.object({
+  matchId: z.string().uuid(),
+  kickoffTime: z.string().datetime({ offset: true }),
+})
+
+export async function updateKickoffTimeAction(
+  _: unknown,
+  formData: FormData
+): Promise<{ error: string | null; success: boolean }> {
+  const parsed = kickoffSchema.safeParse({
+    matchId: formData.get('matchId'),
+    kickoffTime: formData.get('kickoffTime'),
+  })
+  if (!parsed.success) return { error: 'Invalid input.', success: false }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('matches')
+    .update({ kickoff_time: parsed.data.kickoffTime })
+    .eq('id', parsed.data.matchId)
+
+  if (error) return { error: error.message, success: false }
+
+  revalidatePath('/admin/results')
+  revalidatePath('/matches')
+  return { error: null, success: true }
+}
+
 const schema = z.object({
   matchId: z.string().uuid(),
   homeScore: z.string().min(1).regex(/^\d{1,2}$/).transform(Number),
