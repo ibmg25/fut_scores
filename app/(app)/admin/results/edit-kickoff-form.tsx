@@ -3,16 +3,11 @@
 import { useActionState, useState, useEffect, useRef } from 'react'
 import { Pencil, Check, X } from 'lucide-react'
 import { updateKickoffTimeAction } from './actions'
+import { toDatetimeLocal, datetimeLocalToUtcIso } from '@/lib/datetime/format'
 
 interface Props {
   matchId: string
   kickoffTime: string
-}
-
-function toDatetimeLocal(isoString: string): string {
-  const d = new Date(isoString)
-  const pad = (n: number) => n.toString().padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 const initialState = { error: null as string | null, success: false }
@@ -37,7 +32,7 @@ export default function EditKickoffForm({ matchId, kickoffTime }: Props) {
   function handleSubmit() {
     const localVal = localInputRef.current?.value
     if (localVal && hiddenUtcRef.current) {
-      hiddenUtcRef.current.value = new Date(localVal).toISOString()
+      hiddenUtcRef.current.value = datetimeLocalToUtcIso(localVal)
     }
   }
 
