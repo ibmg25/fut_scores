@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import type { SyncLog } from '@/lib/supabase/types'
@@ -14,10 +14,20 @@ interface SyncResult {
   runAt: string
 }
 
+const PAGE_SIZE = 10
+
+function formatRunTime(isoString: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(isoString))
+}
+
 export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [latestResult, setLatestResult] = useState<SyncResult | null>(null)
+  const [page, setPage] = useState(1)
 
   async function handleRunSync() {
     setLoading(true)
@@ -40,6 +50,8 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
   }
 
   const lastRun = recentRuns[0]
+  const totalPages = Math.max(1, Math.ceil(recentRuns.length / PAGE_SIZE))
+  const pageRuns = recentRuns.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <div className="space-y-6">
@@ -61,14 +73,7 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
       {lastRun && (
         <div className="rounded-lg border border-border p-4 space-y-1 text-sm">
           <p className="font-medium">Last sync</p>
-          <p className="text-muted-foreground">
-            {new Intl.DateTimeFormat('en-US', {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-              timeZone: 'UTC',
-            }).format(new Date(lastRun.run_at))}{' '}
-            UTC
-          </p>
+          <p className="text-muted-foreground">{formatRunTime(lastRun.run_at)}</p>
           {lastRun.error ? (
             <p className="text-destructive">{lastRun.error}</p>
           ) : (
@@ -80,17 +85,17 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
         </div>
       )}
 
-      {/* Recent run log */}
+      {/* Recent run log — last 24 hours */}
       {recentRuns.length > 0 && (
         <section>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Recent runs
+            Last 24 hours ({recentRuns.length} runs)
           </h2>
           <div className="rounded-lg border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Time (UTC)</th>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Time</th>
                   <th className="text-right px-4 py-2 font-medium text-muted-foreground">Kickoff</th>
                   <th className="text-right px-4 py-2 font-medium text-muted-foreground">Results</th>
                   <th className="text-right px-4 py-2 font-medium text-muted-foreground">Created</th>
@@ -98,16 +103,10 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {recentRuns.map((run) => (
+                {pageRuns.map((run) => (
                   <tr key={run.id} className="hover:bg-muted/20">
                     <td className="px-4 py-2 text-muted-foreground">
-                      {new Intl.DateTimeFormat('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'UTC',
-                      }).format(new Date(run.run_at))}
+                      {formatRunTime(run.run_at)}
                     </td>
                     <td className="px-4 py-2 text-right">{run.kickoff_updates}</td>
                     <td className="px-4 py-2 text-right">{run.results_loaded}</td>
@@ -129,11 +128,37 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
               </tbody>
             </table>
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Next
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          )}
         </section>
       )}
 
       {recentRuns.length === 0 && (
-        <p className="text-muted-foreground text-sm">No sync runs recorded yet.</p>
+        <p className="text-muted-foreground text-sm">No sync runs in the last 24 hours.</p>
       )}
     </div>
   )
