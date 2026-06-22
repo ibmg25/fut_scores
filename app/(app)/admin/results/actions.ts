@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const kickoffSchema = z.object({
@@ -20,7 +21,20 @@ export async function updateKickoffTimeAction(
   if (!parsed.success) return { error: 'Invalid input.', success: false }
 
   const supabase = await createClient()
-  const { error } = await supabase
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized', success: false }
+
+  const { data: profile } = await supabase
+    .from('users_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
+    return { error: 'Unauthorized', success: false }
+  }
+
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
     .from('matches')
     .update({ kickoff_time: parsed.data.kickoffTime })
     .eq('id', parsed.data.matchId)

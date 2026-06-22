@@ -33,9 +33,11 @@ export async function proxy(request: NextRequest) {
 
   // Public routes that don't require auth
   const isAuthRoute = pathname === '/login' || pathname === '/change-password'
+  // Sync API uses its own auth (Bearer token or admin session) — exclude from proxy redirect.
+  const isSyncApi = pathname.startsWith('/api/sync/')
 
   if (!user) {
-    if (!isAuthRoute) {
+    if (!isAuthRoute && !isSyncApi) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     return response

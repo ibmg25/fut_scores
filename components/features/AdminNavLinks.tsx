@@ -7,6 +7,7 @@ const ALL_LINKS = [
   { href: '/admin/results', label: 'Match Results', superadminOnly: false },
   { href: '/admin/users',   label: 'Users',         superadminOnly: true  },
   { href: '/admin/groups',  label: 'Groups',        superadminOnly: false },
+  { href: '/admin/sync',    label: 'Sync',          superadminOnly: true  },
 ]
 
 export default function AdminNavLinks({ isSuperadmin }: { isSuperadmin: boolean }) {

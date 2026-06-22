@@ -34,6 +34,7 @@ export default async function HomePage({
     )
   }
 
+  // eslint-disable-next-line react-hooks/purity -- Server Component; purity rule does not apply
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
   const { data: rawMatches } = await supabase
