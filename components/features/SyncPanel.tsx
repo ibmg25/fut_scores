@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ interface SyncResult {
 
 const PAGE_SIZE = 10
 
-function formatRunTime(isoString: string) {
+function formatRunTime(isoString: string): string {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -28,6 +28,11 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
   const [loading, setLoading] = useState(false)
   const [latestResult, setLatestResult] = useState<SyncResult | null>(null)
   const [page, setPage] = useState(1)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  const localTime = (iso: string): string =>
+    mounted ? formatRunTime(iso) : '—'
 
   async function handleRunSync() {
     setLoading(true)
@@ -73,7 +78,7 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
       {lastRun && (
         <div className="rounded-lg border border-border p-4 space-y-1 text-sm">
           <p className="font-medium">Last sync</p>
-          <p className="text-muted-foreground">{formatRunTime(lastRun.run_at)}</p>
+          <p className="text-muted-foreground">{localTime(lastRun.run_at)}</p>
           {lastRun.error ? (
             <p className="text-destructive">{lastRun.error}</p>
           ) : (
@@ -106,7 +111,7 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
                 {pageRuns.map((run) => (
                   <tr key={run.id} className="hover:bg-muted/20">
                     <td className="px-4 py-2 text-muted-foreground">
-                      {formatRunTime(run.run_at)}
+                      {localTime(run.run_at)}
                     </td>
                     <td className="px-4 py-2 text-right">{run.kickoff_updates}</td>
                     <td className="px-4 py-2 text-right">{run.results_loaded}</td>
