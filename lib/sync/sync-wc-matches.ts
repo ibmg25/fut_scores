@@ -214,7 +214,7 @@ async function syncKnockoutMatches(
       tournament_id: activeTournament.id,
       home_team_id: homeTeamId,
       away_team_id: awayTeamId,
-      kickoff_time: apiMatch.utcDate,
+      kickoff_time: new Date(apiMatch.utcDate).toISOString(),
       phase,
       is_knockout: true,
       external_id: apiMatch.id,
