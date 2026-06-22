@@ -80,7 +80,11 @@ async function bootstrapMatchExternalIds(
   }
 
   if (updates.length > 0) {
-    await adminClient.from('matches').upsert(updates, { onConflict: 'id' })
+    await Promise.all(
+      updates.map(({ id, external_id }) =>
+        adminClient.from('matches').update({ external_id }).eq('id', id)
+      )
+    )
   }
 }
 
