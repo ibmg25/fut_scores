@@ -2,7 +2,7 @@ name: Match Sync
 
 on:
   schedule:
-    - cron: '*/30 * * * *'   # every 30 minutes, 24/7
+    - cron: '*/5 * * * *'    # every 5 minutes, 24/7
   workflow_dispatch:           # manual trigger from GitHub UI
 
 jobs:
@@ -11,5 +11,6 @@ jobs:
     steps:
       - name: Trigger match sync
         run: |
-          curl -fsS -X POST "${{ secrets.APP_URL }}/api/sync/matches" \
+          curl -fsS --max-time 60 --connect-timeout 10 \
+            -X POST "${{ secrets.APP_URL }}/api/sync/matches" \
             -H "Authorization: Bearer ${{ secrets.SYNC_SECRET }}"
