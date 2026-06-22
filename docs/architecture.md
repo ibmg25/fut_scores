@@ -9,6 +9,7 @@ Users predict match results, earn points via a hierarchical scoring system, and 
 - **Styling:** Tailwind CSS 4 + shadcn/ui (Base UI primitives)
 - **Backend + DB:** Supabase (PostgreSQL, Auth, RLS, Postgres Triggers, RPC)
 - **Testing:** Vitest (unit tests — scoring logic is the priority)
+- **Sync:** GitHub Actions cron → `POST /api/sync/matches` → football-data.org v4 API
 - **Port:** 3000
 
 ## Folder Structure
@@ -21,6 +22,7 @@ Users predict match results, earn points via a hierarchical scoring system, and 
     /matches        # prediction UI
     /leaderboard
     /admin          # superadmin only: finalize results, manage users
+      /sync         # sync log viewer + manual trigger (superadmin only)
     /players
   layout.tsx        # root layout (Toaster, fonts)
   page.tsx          # root redirect
@@ -30,6 +32,7 @@ Users predict match results, earn points via a hierarchical scoring system, and 
 /lib
   /supabase         # client.ts, server.ts, admin.ts, types.ts
   /scoring          # score-prediction.ts, compute-ranks.ts (pure TS, unit-tested)
+  /sync             # football-data-client.ts, sync-wc-matches.ts, team-id-map.ts
   /auth
   /datetime
   match-phases.ts
@@ -51,6 +54,7 @@ Flow:
 2. Unauthenticated → redirect to `/login` (except `/login` and `/change-password`).
 3. Authenticated + `must_change_password = true` → redirect to `/change-password`.
 4. `/admin/**` requires `role = 'superadmin'` or `'admin'`; otherwise redirect to `/home`.
+5. `POST /api/sync/matches` accepts a `Bearer <SYNC_SECRET>` token (no session required) — used by GitHub Actions. Alternatively accepts an admin/superadmin session.
 
 ## Supabase Usage Patterns
 
@@ -85,6 +89,19 @@ Predictions are locked **1 hour before kickoff**. The authoritative enforcement 
 `total_points DESC` → `exact_results_count DESC` → `display_name ASC`.
 Scores are denormalized in `users_profiles` and maintained by the `recompute_user_aggregates` trigger.
 
+## Automated Match Sync
+
+A GitHub Actions cron (every 30 min) calls `POST /api/sync/matches`. Each run makes one API call to football-data.org and performs four operations in order:
+
+1. **`bootstrapMatchExternalIds`** — one-time idempotent: links existing DB match rows to API fixtures by matching team `external_id` values. No-op once all matches are linked.
+2. **`syncKickoffTimes`** — updates `kickoff_time` for pending matches where the API date differs.
+3. **`syncResults`** — calls `finalize_match` RPC for newly `FINISHED` matches.
+4. **`syncKnockoutMatches`** — inserts confirmed knockout matches (both teams non-null in API) not yet in the DB.
+
+All four operations filter exclusively on `status = 'pending'` — finished matches are never touched. Results are written to the `sync_log` table (admin-readable).
+
+The `teams.external_id` and `matches.external_id` columns store football-data.org numeric IDs. `lib/sync/team-id-map.ts` holds the static 48-team name → API ID mapping.
+
 ## UI Conventions
 
 - Class merging via `cn()` from `lib/utils.ts` — never manual string concatenation for Tailwind classes.
@@ -101,3 +118,5 @@ Scores are denormalized in `users_profiles` and maintained by the `recompute_use
 | `NEXT_PUBLIC_SUPABASE_URL` | Public (browser-safe) | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public (browser-safe) | RLS-gated anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** | Admin operations — never expose to client |
+| `FOOTBALL_DATA_API_KEY` | **Server-only** | football-data.org v4 API key |
+| `SYNC_SECRET` | **Server-only** | Bearer token authorizing `POST /api/sync/matches` from GitHub Actions |
