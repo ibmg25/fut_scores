@@ -54,6 +54,7 @@ Flow:
 2. Unauthenticated → redirect to `/login` (except `/login` and `/change-password`).
 3. Authenticated + `must_change_password = true` → redirect to `/change-password`.
 4. `/admin/**` requires `role = 'superadmin'` or `'admin'`; otherwise redirect to `/home`.
+   - `/admin/sync` additionally calls `requireSuperadmin()` inside the page server component (superadmin-only at the application layer, not just the nav).
 5. `POST /api/sync/matches` accepts a `Bearer <SYNC_SECRET>` token (no session required) — used by GitHub Actions. Alternatively accepts an admin/superadmin session.
 
 ## Supabase Usage Patterns
@@ -91,7 +92,7 @@ Scores are denormalized in `users_profiles` and maintained by the `recompute_use
 
 ## Automated Match Sync
 
-A GitHub Actions cron (every 30 min) calls `POST /api/sync/matches`. Each run makes one API call to football-data.org and performs four operations in order:
+A GitHub Actions cron (every 15 min) calls `POST /api/sync/matches`. Each run makes one API call to football-data.org and performs four operations in order:
 
 1. **`bootstrapMatchExternalIds`** — one-time idempotent: links existing DB match rows to API fixtures by matching team `external_id` values. No-op once all matches are linked.
 2. **`syncKickoffTimes`** — updates `kickoff_time` for pending matches where the API date differs.
