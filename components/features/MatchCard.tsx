@@ -94,14 +94,17 @@ export default function MatchCard({ match, prediction }: Props) {
 
   // Uncontrolled inputs don't fire onChange for untouched fields; sync state after each save
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     setHomeVal(prediction?.predicted_home_score?.toString() ?? '')
     setAwayVal(prediction?.predicted_away_score?.toString() ?? '')
     setPenaltyVal(prediction?.predicted_penalty_winner_team_id ?? '')
+    /* eslint-enable react-hooks/set-state-in-effect */
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prediction?.updated_at])
 
   // Reset penalty pick to saved value when tie is broken
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!showPenaltyPicker) setPenaltyVal(savedPenalty)
   }, [showPenaltyPicker, savedPenalty])
 
