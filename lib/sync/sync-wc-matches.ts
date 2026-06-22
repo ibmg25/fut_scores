@@ -8,6 +8,15 @@ export interface SyncResult {
   matchesCreated: number
 }
 
+interface PendingMatch {
+  id: string
+  external_id: number
+  kickoff_time: string
+  home_team_id: string
+  away_team_id: string
+  is_knockout: boolean
+}
+
 // Maps API stage + group values to DB match_phase enum values.
 function apiStageToPhase(stage: string, group: string | null): MatchPhase | null {
   switch (stage) {
@@ -57,6 +66,8 @@ async function bootstrapMatchExternalIds(
     }
   }
 
+  const updates: { id: string; external_id: number }[] = []
+
   for (const dbMatch of unlinked) {
     const homeExt = (dbMatch.home_team as unknown as { external_id: number | null })?.external_id
     const awayExt = (dbMatch.away_team as unknown as { external_id: number | null })?.external_id
@@ -65,31 +76,27 @@ async function bootstrapMatchExternalIds(
     const apiMatch = apiByTeams.get(`${homeExt}:${awayExt}`)
     if (!apiMatch) continue
 
-    await adminClient
-      .from('matches')
-      .update({ external_id: apiMatch.id })
-      .eq('id', dbMatch.id)
+    updates.push({ id: dbMatch.id, external_id: apiMatch.id })
+  }
+
+  if (updates.length > 0) {
+    await adminClient.from('matches').upsert(updates, { onConflict: 'id' })
   }
 }
 
 // Updates kickoff_time for pending linked matches where the API date differs.
 async function syncKickoffTimes(
   adminClient: ReturnType<typeof createAdminClient>,
-  apiMatches: ApiMatch[]
+  apiMatches: ApiMatch[],
+  pendingMatches: PendingMatch[]
 ): Promise<number> {
-  const { data: pendingMatches } = await adminClient
-    .from('matches')
-    .select('id, external_id, kickoff_time')
-    .not('external_id', 'is', null)
-    .eq('status', 'pending')
-
-  if (!pendingMatches?.length) return 0
+  if (!pendingMatches.length) return 0
 
   const apiById = new Map(apiMatches.map((m) => [m.id, m]))
   let count = 0
 
   for (const dbMatch of pendingMatches) {
-    const apiMatch = apiById.get(dbMatch.external_id!)
+    const apiMatch = apiById.get(dbMatch.external_id)
     if (!apiMatch) continue
 
     const apiDate = new Date(apiMatch.utcDate).toISOString()
@@ -110,33 +117,42 @@ async function syncKickoffTimes(
 // Calls finalize_match for pending linked matches that the API reports as FINISHED.
 async function syncResults(
   adminClient: ReturnType<typeof createAdminClient>,
-  apiMatches: ApiMatch[]
+  apiMatches: ApiMatch[],
+  pendingMatches: PendingMatch[]
 ): Promise<number> {
-  const { data: pendingMatches } = await adminClient
-    .from('matches')
-    .select('id, external_id, home_team_id, away_team_id, is_knockout')
-    .not('external_id', 'is', null)
-    .eq('status', 'pending')
-
-  if (!pendingMatches?.length) return 0
+  if (!pendingMatches.length) return 0
 
   const apiById = new Map(apiMatches.map((m) => [m.id, m]))
   let count = 0
 
   for (const dbMatch of pendingMatches) {
-    const apiMatch = apiById.get(dbMatch.external_id!)
+    const apiMatch = apiById.get(dbMatch.external_id)
     if (!apiMatch || apiMatch.status !== 'FINISHED') continue
 
-    const homeScore = apiMatch.score.fullTime.home
-    const awayScore = apiMatch.score.fullTime.away
-    if (homeScore == null || awayScore == null) continue
+    // For EXTRA_TIME: fullTime holds 90-min goals only; add regularTime + extraTime
+    // for the true final score. REGULAR and PENALTY_SHOOTOUT use fullTime directly.
+    let homeScore: number
+    let awayScore: number
+
+    if (apiMatch.score.duration === 'EXTRA_TIME') {
+      const rt = apiMatch.score.regularTime
+      const et = apiMatch.score.extraTime
+      if (rt?.home == null || rt?.away == null || et?.home == null || et?.away == null) continue
+      homeScore = rt.home + et.home
+      awayScore = rt.away + et.away
+    } else {
+      const ft = apiMatch.score.fullTime
+      if (ft.home == null || ft.away == null) continue
+      homeScore = ft.home
+      awayScore = ft.away
+    }
 
     let penaltyWinner: string | null = null
     if (apiMatch.score.duration === 'PENALTY_SHOOTOUT' && dbMatch.is_knockout) {
-      penaltyWinner =
-        apiMatch.score.winner === 'HOME_TEAM'
-          ? dbMatch.home_team_id
-          : dbMatch.away_team_id
+      const winner = apiMatch.score.winner
+      if (winner === 'HOME_TEAM') penaltyWinner = dbMatch.home_team_id
+      else if (winner === 'AWAY_TEAM') penaltyWinner = dbMatch.away_team_id
+      else continue // winner null or 'DRAW' — API data not ready yet, skip
     }
 
     const { error } = await adminClient.rpc('finalize_match', {
@@ -212,8 +228,18 @@ export async function syncWcMatches(): Promise<SyncResult> {
   const apiMatches = await fetchWcMatches()
 
   await bootstrapMatchExternalIds(adminClient, apiMatches)
-  const kickoffUpdates = await syncKickoffTimes(adminClient, apiMatches)
-  const resultsLoaded = await syncResults(adminClient, apiMatches)
+
+  // Single query shared by syncKickoffTimes and syncResults.
+  const { data: rawPending } = await adminClient
+    .from('matches')
+    .select('id, external_id, kickoff_time, home_team_id, away_team_id, is_knockout')
+    .not('external_id', 'is', null)
+    .eq('status', 'pending')
+
+  const pendingMatches = (rawPending ?? []) as PendingMatch[]
+
+  const kickoffUpdates = await syncKickoffTimes(adminClient, apiMatches, pendingMatches)
+  const resultsLoaded = await syncResults(adminClient, apiMatches, pendingMatches)
   const matchesCreated = await syncKnockoutMatches(adminClient, apiMatches)
 
   return { kickoffUpdates, resultsLoaded, matchesCreated }
