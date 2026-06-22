@@ -38,18 +38,21 @@ export interface Database {
           id: string
           name: string
           flag_url: string | null
+          external_id: number | null
           created_at: string
         }
         Insert: {
           id?: string
           name: string
           flag_url?: string | null
+          external_id?: number | null
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
           flag_url?: string | null
+          external_id?: number | null
           created_at?: string
         }
         Relationships: []
@@ -63,6 +66,7 @@ export interface Database {
           kickoff_time: string
           phase: MatchPhase
           is_knockout: boolean
+          external_id: number | null
           home_score: number | null
           away_score: number | null
           penalty_winner_team_id: string | null
@@ -79,6 +83,7 @@ export interface Database {
           kickoff_time: string
           phase: MatchPhase
           is_knockout?: boolean
+          external_id?: number | null
           home_score?: number | null
           away_score?: number | null
           penalty_winner_team_id?: string | null
@@ -95,6 +100,7 @@ export interface Database {
           kickoff_time?: string
           phase?: MatchPhase
           is_knockout?: boolean
+          external_id?: number | null
           home_score?: number | null
           away_score?: number | null
           penalty_winner_team_id?: string | null
@@ -254,6 +260,33 @@ export interface Database {
           },
         ]
       }
+      sync_log: {
+        Row: {
+          id: string
+          run_at: string
+          kickoff_updates: number
+          results_loaded: number
+          matches_created: number
+          error: string | null
+        }
+        Insert: {
+          id?: string
+          run_at?: string
+          kickoff_updates?: number
+          results_loaded?: number
+          matches_created?: number
+          error?: string | null
+        }
+        Update: {
+          id?: string
+          run_at?: string
+          kickoff_updates?: number
+          results_loaded?: number
+          matches_created?: number
+          error?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_leaderboard: {
@@ -313,6 +346,7 @@ export type UserProfile = Tables<'users_profiles'>
 export type Prediction = Tables<'predictions'>
 export type Group = Tables<'groups'>
 export type GroupMember = Tables<'group_members'>
+export type SyncLog = Tables<'sync_log'>
 
 export type MatchWithTeams = Match & {
   home_team: Team
