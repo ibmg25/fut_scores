@@ -10,7 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger match sync
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
         run: |
           curl -fsS --max-time 60 --connect-timeout 10 \
-            -X POST "${{ secrets.APP_URL }}/api/sync/matches" \
-            -H "Authorization: Bearer ${{ secrets.SYNC_SECRET }}"
+            -X POST "${APP_URL%/}/api/sync/matches" \
+            -H "Authorization: Bearer ${SYNC_SECRET}"
