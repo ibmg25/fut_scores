@@ -30,6 +30,11 @@ export async function POST(request: NextRequest) {
 
   await adminClient.from('sync_log').insert(logRow)
 
+  await adminClient
+    .from('sync_log')
+    .delete()
+    .lt('run_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+
   if (errorMessage) {
     return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
