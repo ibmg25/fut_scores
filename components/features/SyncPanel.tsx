@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import type { SyncLog } from '@/lib/supabase/types'
+import type { SyncLog, SyncDetails } from '@/lib/supabase/types'
 
 interface SyncResult {
   kickoffUpdates: number
@@ -21,6 +21,52 @@ function formatRunTime(isoString: string): string {
   }).format(new Date(isoString))
 }
 
+function SyncDetailRow({
+  details,
+  localTime,
+}: {
+  details: SyncDetails
+  localTime: (iso: string) => string
+}) {
+  const parts = [
+    details.results.length > 0 && `${details.results.length} result${details.results.length > 1 ? 's' : ''}`,
+    details.kickoffs.length > 0 && `${details.kickoffs.length} kickoff update${details.kickoffs.length > 1 ? 's' : ''}`,
+    details.created.length > 0 && `${details.created.length} match${details.created.length > 1 ? 'es' : ''} created`,
+  ].filter(Boolean).join(' · ')
+
+  return (
+    <tr className="bg-muted/10">
+      <td colSpan={5} className="px-4 pb-3 pt-0">
+        <details className="text-xs text-muted-foreground">
+          <summary className="cursor-pointer select-none hover:text-foreground py-1">
+            {parts}
+          </summary>
+          <div className="mt-2 space-y-1 pl-3 border-l-2 border-border">
+            {details.results.length > 0 && (
+              <p>
+                <span className="font-medium text-foreground">Results:</span>{' '}
+                {details.results.map((r) => `${r.match}  ${r.score}`).join('  ·  ')}
+              </p>
+            )}
+            {details.kickoffs.length > 0 && (
+              <p>
+                <span className="font-medium text-foreground">Kickoffs:</span>{' '}
+                {details.kickoffs.map((k) => `${k.match} → ${localTime(k.newTime)}`).join('  ·  ')}
+              </p>
+            )}
+            {details.created.length > 0 && (
+              <p>
+                <span className="font-medium text-foreground">Created:</span>{' '}
+                {details.created.map((c) => `${c.match}  ${localTime(c.kickoff)}`).join('  ·  ')}
+              </p>
+            )}
+          </div>
+        </details>
+      </td>
+    </tr>
+  )
+}
+
 export default function SyncPanel({
   lastSuccessfulRun,
   relevantRuns,
@@ -32,6 +78,7 @@ export default function SyncPanel({
   const [loading, setLoading] = useState(false)
   const [latestResult, setLatestResult] = useState<SyncResult | null>(null)
   const [mounted, setMounted] = useState(false)
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: avoids hydration mismatch on date formatting
   useEffect(() => { setMounted(true) }, [])
 
   const localTime = (iso: string): string =>
@@ -114,26 +161,29 @@ export default function SyncPanel({
               </thead>
               <tbody className="divide-y divide-border">
                 {relevantRuns.map((run) => (
-                  <tr key={run.id} className="hover:bg-muted/20">
-                    <td className="px-4 py-2 text-muted-foreground">
-                      {localTime(run.run_at)}
-                    </td>
-                    <td className="px-4 py-2 text-right">{run.kickoff_updates}</td>
-                    <td className="px-4 py-2 text-right">{run.results_loaded}</td>
-                    <td className="px-4 py-2 text-right">{run.matches_created}</td>
-                    <td className="px-4 py-2">
-                      {run.error ? (
-                        <span
-                          className="text-destructive truncate max-w-[200px] block"
-                          title={run.error}
-                        >
-                          {run.error}
-                        </span>
-                      ) : (
-                        <span className="text-green-600 dark:text-green-400">OK</span>
-                      )}
-                    </td>
-                  </tr>
+                  <React.Fragment key={run.id}>
+                    <tr className="hover:bg-muted/20">
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {localTime(run.run_at)}
+                      </td>
+                      <td className="px-4 py-2 text-right">{run.kickoff_updates}</td>
+                      <td className="px-4 py-2 text-right">{run.results_loaded}</td>
+                      <td className="px-4 py-2 text-right">{run.matches_created}</td>
+                      <td className="px-4 py-2">
+                        {run.error ? (
+                          <span
+                            className="text-destructive truncate max-w-[200px] block"
+                            title={run.error}
+                          >
+                            {run.error}
+                          </span>
+                        ) : (
+                          <span className="text-green-600 dark:text-green-400">OK</span>
+                        )}
+                      </td>
+                    </tr>
+                    {run.details && <SyncDetailRow details={run.details as SyncDetails} localTime={localTime} />}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

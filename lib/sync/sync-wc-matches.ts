@@ -1,11 +1,13 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { fetchWcMatches, type ApiMatch } from './football-data-client'
+import { fetchWcMatches, type ApiMatch, type ApiTeam } from './football-data-client'
 import type { MatchPhase } from '@/lib/supabase/types'
+import type { SyncDetails } from '@/lib/supabase/types'
 
 export interface SyncResult {
   kickoffUpdates: number
-  resultsLoaded: number
+  resultsLoaded:  number
   matchesCreated: number
+  details: SyncDetails
 }
 
 interface PendingMatch {
@@ -15,6 +17,10 @@ interface PendingMatch {
   home_team_id: string
   away_team_id: string
   is_knockout: boolean
+}
+
+function matchLabel(home: ApiTeam, away: ApiTeam): string {
+  return `${home.tla ?? home.name ?? '?'} vs ${away.tla ?? away.name ?? '?'}`
 }
 
 // Maps API stage + group values to DB match_phase enum values.
@@ -93,11 +99,12 @@ async function syncKickoffTimes(
   adminClient: ReturnType<typeof createAdminClient>,
   apiMatches: ApiMatch[],
   pendingMatches: PendingMatch[]
-): Promise<number> {
-  if (!pendingMatches.length) return 0
+): Promise<{ count: number; changes: SyncDetails['kickoffs'] }> {
+  if (!pendingMatches.length) return { count: 0, changes: [] }
 
   const apiById = new Map(apiMatches.map((m) => [m.id, m]))
   let count = 0
+  const changes: SyncDetails['kickoffs'] = []
 
   for (const dbMatch of pendingMatches) {
     const apiMatch = apiById.get(dbMatch.external_id)
@@ -112,10 +119,13 @@ async function syncKickoffTimes(
       .update({ kickoff_time: apiDate })
       .eq('id', dbMatch.id)
 
-    if (!error) count++
+    if (!error) {
+      count++
+      changes.push({ match: matchLabel(apiMatch.homeTeam, apiMatch.awayTeam), newTime: apiDate })
+    }
   }
 
-  return count
+  return { count, changes }
 }
 
 // Calls finalize_match for pending linked matches that the API reports as FINISHED.
@@ -123,11 +133,12 @@ async function syncResults(
   adminClient: ReturnType<typeof createAdminClient>,
   apiMatches: ApiMatch[],
   pendingMatches: PendingMatch[]
-): Promise<number> {
-  if (!pendingMatches.length) return 0
+): Promise<{ count: number; changes: SyncDetails['results'] }> {
+  if (!pendingMatches.length) return { count: 0, changes: [] }
 
   const apiById = new Map(apiMatches.map((m) => [m.id, m]))
   let count = 0
+  const changes: SyncDetails['results'] = []
 
   for (const dbMatch of pendingMatches) {
     const apiMatch = apiById.get(dbMatch.external_id)
@@ -166,10 +177,16 @@ async function syncResults(
       p_penalty_winner: penaltyWinner,
     })
 
-    if (!error) count++
+    if (!error) {
+      count++
+      changes.push({
+        match: matchLabel(apiMatch.homeTeam, apiMatch.awayTeam),
+        score: `${homeScore}-${awayScore}`,
+      })
+    }
   }
 
-  return count
+  return { count, changes }
 }
 
 // Creates DB rows for knockout matches whose teams are now confirmed in the API.
@@ -177,12 +194,12 @@ async function syncResults(
 async function syncKnockoutMatches(
   adminClient: ReturnType<typeof createAdminClient>,
   apiMatches: ApiMatch[]
-): Promise<number> {
+): Promise<{ count: number; changes: SyncDetails['created'] }> {
   const knockoutStages = new Set(['LAST_32', 'LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'THIRD_PLACE', 'FINAL'])
   const knockoutApiMatches = apiMatches.filter(
     (m) => knockoutStages.has(m.stage) && m.homeTeam.id != null && m.awayTeam.id != null
   )
-  if (!knockoutApiMatches.length) return 0
+  if (!knockoutApiMatches.length) return { count: 0, changes: [] }
 
   const [{ data: existingExternalIds }, { data: activeTournament }, { data: teams }] =
     await Promise.all([
@@ -191,7 +208,7 @@ async function syncKnockoutMatches(
       adminClient.from('teams').select('id, external_id').not('external_id', 'is', null),
     ])
 
-  if (!activeTournament) return 0
+  if (!activeTournament) return { count: 0, changes: [] }
 
   const linkedExternalIds = new Set(existingExternalIds?.map((r) => r.external_id) ?? [])
   const teamByExternalId = new Map(
@@ -199,6 +216,7 @@ async function syncKnockoutMatches(
   )
 
   let count = 0
+  const changes: SyncDetails['created'] = []
 
   for (const apiMatch of knockoutApiMatches) {
     if (linkedExternalIds.has(apiMatch.id)) continue
@@ -210,20 +228,25 @@ async function syncKnockoutMatches(
     const phase = apiStageToPhase(apiMatch.stage, apiMatch.group)
     if (!phase) continue
 
+    const kickoff = new Date(apiMatch.utcDate).toISOString()
+
     const { error } = await adminClient.from('matches').insert({
       tournament_id: activeTournament.id,
       home_team_id: homeTeamId,
       away_team_id: awayTeamId,
-      kickoff_time: new Date(apiMatch.utcDate).toISOString(),
+      kickoff_time: kickoff,
       phase,
       is_knockout: true,
       external_id: apiMatch.id,
     })
 
-    if (!error) count++
+    if (!error) {
+      count++
+      changes.push({ match: matchLabel(apiMatch.homeTeam, apiMatch.awayTeam), kickoff })
+    }
   }
 
-  return count
+  return { count, changes }
 }
 
 // Main orchestrator: fetches all WC matches from the API and runs the four sync operations.
@@ -242,9 +265,18 @@ export async function syncWcMatches(): Promise<SyncResult> {
 
   const pendingMatches = (rawPending ?? []) as PendingMatch[]
 
-  const kickoffUpdates = await syncKickoffTimes(adminClient, apiMatches, pendingMatches)
-  const resultsLoaded = await syncResults(adminClient, apiMatches, pendingMatches)
-  const matchesCreated = await syncKnockoutMatches(adminClient, apiMatches)
+  const kickoffResult  = await syncKickoffTimes(adminClient, apiMatches, pendingMatches)
+  const resultsResult  = await syncResults(adminClient, apiMatches, pendingMatches)
+  const knockoutResult = await syncKnockoutMatches(adminClient, apiMatches)
 
-  return { kickoffUpdates, resultsLoaded, matchesCreated }
+  return {
+    kickoffUpdates: kickoffResult.count,
+    resultsLoaded:  resultsResult.count,
+    matchesCreated: knockoutResult.count,
+    details: {
+      kickoffs: kickoffResult.changes,
+      results:  resultsResult.changes,
+      created:  knockoutResult.changes,
+    },
+  }
 }
