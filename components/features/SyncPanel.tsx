@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import type { SyncLog } from '@/lib/supabase/types'
@@ -14,8 +14,6 @@ interface SyncResult {
   runAt: string
 }
 
-const PAGE_SIZE = 10
-
 function formatRunTime(isoString: string): string {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
@@ -23,11 +21,16 @@ function formatRunTime(isoString: string): string {
   }).format(new Date(isoString))
 }
 
-export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
+export default function SyncPanel({
+  lastSuccessfulRun,
+  relevantRuns,
+}: {
+  lastSuccessfulRun: SyncLog | null
+  relevantRuns: SyncLog[]
+}) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [latestResult, setLatestResult] = useState<SyncResult | null>(null)
-  const [page, setPage] = useState(1)
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
@@ -54,10 +57,6 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
     }
   }
 
-  const lastRun = recentRuns[0]
-  const totalPages = Math.max(1, Math.ceil(recentRuns.length / PAGE_SIZE))
-  const pageRuns = recentRuns.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-
   return (
     <div className="space-y-6">
       {/* Trigger */}
@@ -75,27 +74,33 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
       </div>
 
       {/* Last sync status */}
-      {lastRun && (
-        <div className="rounded-lg border border-border p-4 space-y-1 text-sm">
-          <p className="font-medium">Last sync</p>
-          <p className="text-muted-foreground">{localTime(lastRun.run_at)}</p>
-          {lastRun.error ? (
-            <p className="text-destructive">{lastRun.error}</p>
-          ) : (
+      <div className="rounded-lg border border-border p-4 space-y-1 text-sm">
+        <p className="font-medium">Last sync</p>
+        {lastSuccessfulRun ? (
+          <>
+            <p className="text-muted-foreground">{localTime(lastSuccessfulRun.run_at)}</p>
             <p className="text-muted-foreground">
-              {lastRun.kickoff_updates} kickoff updates · {lastRun.results_loaded} results loaded ·{' '}
-              {lastRun.matches_created} matches created
+              {lastSuccessfulRun.kickoff_updates} kickoff updates · {lastSuccessfulRun.results_loaded} results loaded ·{' '}
+              {lastSuccessfulRun.matches_created} matches created
             </p>
-          )}
-        </div>
-      )}
+          </>
+        ) : (
+          <p className="text-muted-foreground">No sync has run yet.</p>
+        )}
+      </div>
 
-      {/* Recent run log — last 24 hours */}
-      {recentRuns.length > 0 && (
-        <section>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Last 24 hours ({recentRuns.length} runs)
-          </h2>
+      {/* Run log — last 10 syncs with changes */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          Last 10 syncs with changes
+        </h2>
+        {relevantRuns.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            {lastSuccessfulRun
+              ? 'Sync is running correctly. No data changes have been recorded yet.'
+              : 'No sync runs recorded yet.'}
+          </p>
+        ) : (
           <div className="rounded-lg border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
@@ -108,7 +113,7 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {pageRuns.map((run) => (
+                {relevantRuns.map((run) => (
                   <tr key={run.id} className="hover:bg-muted/20">
                     <td className="px-4 py-2 text-muted-foreground">
                       {localTime(run.run_at)}
@@ -133,38 +138,8 @@ export default function SyncPanel({ recentRuns }: { recentRuns: SyncLog[] }) {
               </tbody>
             </table>
           </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                Next
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-          )}
-        </section>
-      )}
-
-      {recentRuns.length === 0 && (
-        <p className="text-muted-foreground text-sm">No sync runs in the last 24 hours.</p>
-      )}
+        )}
+      </section>
     </div>
   )
 }
