@@ -268,6 +268,7 @@ export interface Database {
           results_loaded: number
           matches_created: number
           error: string | null
+          details: SyncDetails | null
         }
         Insert: {
           id?: string
@@ -276,6 +277,7 @@ export interface Database {
           results_loaded?: number
           matches_created?: number
           error?: string | null
+          details?: SyncDetails | null
         }
         Update: {
           id?: string
@@ -284,6 +286,7 @@ export interface Database {
           results_loaded?: number
           matches_created?: number
           error?: string | null
+          details?: SyncDetails | null
         }
         Relationships: []
       }
@@ -347,6 +350,12 @@ export type Prediction = Tables<'predictions'>
 export type Group = Tables<'groups'>
 export type GroupMember = Tables<'group_members'>
 export type SyncLog = Tables<'sync_log'>
+
+export interface SyncDetails {
+  kickoffs: { match: string; newTime: string }[]
+  results:  { match: string; score: string }[]
+  created:  { match: string; kickoff: string }[]
+}
 
 export type MatchWithTeams = Match & {
   home_team: Team

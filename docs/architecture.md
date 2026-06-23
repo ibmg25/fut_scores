@@ -9,7 +9,7 @@ Users predict match results, earn points via a hierarchical scoring system, and 
 - **Styling:** Tailwind CSS 4 + shadcn/ui (Base UI primitives)
 - **Backend + DB:** Supabase (PostgreSQL, Auth, RLS, Postgres Triggers, RPC)
 - **Testing:** Vitest (unit tests — scoring logic is the priority)
-- **Sync:** GitHub Actions cron → `POST /api/sync/matches` → football-data.org v4 API
+- **Sync:** cron-job.org → `POST /api/sync/matches` → football-data.org v4 API
 - **Port:** 3000
 
 ## Folder Structure
@@ -55,7 +55,7 @@ Flow:
 3. Authenticated + `must_change_password = true` → redirect to `/change-password`.
 4. `/admin/**` requires `role = 'superadmin'` or `'admin'`; otherwise redirect to `/home`.
    - `/admin/sync` additionally calls `requireSuperadmin()` inside the page server component (superadmin-only at the application layer, not just the nav).
-5. `POST /api/sync/matches` accepts a `Bearer <SYNC_SECRET>` token (no session required) — used by GitHub Actions. Alternatively accepts an admin/superadmin session.
+5. `POST /api/sync/matches` accepts a `Bearer <SYNC_SECRET>` token (no session required) — used by cron-job.org. Alternatively accepts an admin/superadmin session.
 
 ## Supabase Usage Patterns
 
@@ -92,14 +92,14 @@ Scores are denormalized in `users_profiles` and maintained by the `recompute_use
 
 ## Automated Match Sync
 
-A GitHub Actions cron (every 15 min) calls `POST /api/sync/matches`. Each run makes one API call to football-data.org and performs four operations in order:
+A cron-job.org job calls `POST /api/sync/matches`. Each run makes one API call to football-data.org and performs four operations in order:
 
 1. **`bootstrapMatchExternalIds`** — one-time idempotent: links existing DB match rows to API fixtures by matching team `external_id` values. No-op once all matches are linked.
 2. **`syncKickoffTimes`** — updates `kickoff_time` for pending matches where the API date differs.
 3. **`syncResults`** — calls `finalize_match` RPC for newly `FINISHED` matches.
 4. **`syncKnockoutMatches`** — inserts confirmed knockout matches (both teams non-null in API) not yet in the DB.
 
-All four operations filter exclusively on `status = 'pending'` — finished matches are never touched. Results are written to the `sync_log` table (admin-readable).
+All four operations filter exclusively on `status = 'pending'` — finished matches are never touched. Results are written to the `sync_log` table (admin-readable); the `details` JSONB column stores match-level change info (which teams, score, or new kickoff time) for the admin/sync view.
 
 The `teams.external_id` and `matches.external_id` columns store football-data.org numeric IDs. `lib/sync/team-id-map.ts` holds the static 48-team name → API ID mapping.
 
@@ -120,4 +120,4 @@ The `teams.external_id` and `matches.external_id` columns store football-data.or
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public (browser-safe) | RLS-gated anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** | Admin operations — never expose to client |
 | `FOOTBALL_DATA_API_KEY` | **Server-only** | football-data.org v4 API key |
-| `SYNC_SECRET` | **Server-only** | Bearer token authorizing `POST /api/sync/matches` from GitHub Actions |
+| `SYNC_SECRET` | **Server-only** | Bearer token authorizing `POST /api/sync/matches` from cron-job.org |

@@ -7,14 +7,23 @@ export default async function AdminSyncPage() {
   await requireSuperadmin()
   const supabase = await createClient()
 
-  // eslint-disable-next-line react-hooks/purity -- Server Component; purity rule does not apply
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-  const { data: runs } = await supabase
+  // Most recent successful run — no time window, drives the "Last sync" header card
+  const { data: lastRunRows } = await supabase
     .from('sync_log')
     .select('*')
-    .gte('run_at', since)
+    .is('error', null)
     .order('run_at', { ascending: false })
-    .limit(100)
+    .limit(1)
+  const lastSuccessfulRun = (lastRunRows?.[0] ?? null) as SyncLog | null
 
-  return <SyncPanel recentRuns={(runs ?? []) as SyncLog[]} />
+  // Last 10 runs that produced at least one change — no time window
+  const { data: relevantRows } = await supabase
+    .from('sync_log')
+    .select('*')
+    .or('kickoff_updates.gt.0,results_loaded.gt.0,matches_created.gt.0')
+    .order('run_at', { ascending: false })
+    .limit(10)
+  const relevantRuns = (relevantRows ?? []) as SyncLog[]
+
+  return <SyncPanel lastSuccessfulRun={lastSuccessfulRun} relevantRuns={relevantRuns} />
 }
