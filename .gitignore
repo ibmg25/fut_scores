@@ -44,3 +44,8 @@ next-env.d.ts
 plan*.md
 prompt*.md
 
+# Supabase CLI local state (not app code)
+supabase/.temp
+supabase/.branches
+supabase/snippets
+
