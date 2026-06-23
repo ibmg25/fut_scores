@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     results_loaded: result?.resultsLoaded ?? 0,
     matches_created: result?.matchesCreated ?? 0,
     error: errorMessage ?? null,
+    details: result?.details ?? null,
   }
 
   await adminClient.from('sync_log').insert(logRow)
