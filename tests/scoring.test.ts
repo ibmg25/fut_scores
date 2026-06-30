@@ -88,24 +88,24 @@ describe('scorePrediction', () => {
       }))).toBe(5)
     })
 
-    it('awards 2 for predicting correct team advancing via penalties (home wins on pens)', () => {
-      // predicted home win 2-1, official 1-1 pens home
+    it('awards 0 for predicting a win when match was tied and decided on penalties (home)', () => {
+      // predicted home win 2-1, official 1-1 pens home — predicted win but score was tie → 0
       expect(scorePrediction(make({
         predictedHome: 2, predictedAway: 1,
         officialHome: 1, officialAway: 1,
         penaltyWinnerId: HOME_ID,
         isKnockout: true,
-      }))).toBe(2)
+      }))).toBe(0)
     })
 
-    it('awards 2 for predicting correct team advancing via penalties (away wins on pens)', () => {
-      // predicted away win 0-1, official 0-0 pens away
+    it('awards 0 for predicting a win when match was tied and decided on penalties (away)', () => {
+      // predicted away win 0-1, official 0-0 pens away — predicted win but score was tie → 0
       expect(scorePrediction(make({
         predictedHome: 0, predictedAway: 1,
         officialHome: 0, officialAway: 0,
         penaltyWinnerId: AWAY_ID,
         isKnockout: true,
-      }))).toBe(2)
+      }))).toBe(0)
     })
 
     it('awards 10 for predicting exact score in knockout where home won on penalties', () => {
