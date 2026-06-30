@@ -39,10 +39,7 @@ export function scorePrediction(input: ScoreInput): number {
     points = 5
   } else {
     const predictedOutcome = getOutcomeFromScores(predictedHome, predictedAway)
-    const officialOutcome =
-      isKnockout && penaltyWinnerId !== null
-        ? (penaltyWinnerId === homeTeamId ? 'home' : 'away')
-        : getOutcomeFromScores(officialHome, officialAway)
+    const officialOutcome = getOutcomeFromScores(officialHome, officialAway)
     points = predictedOutcome === officialOutcome ? 2 : 0
   }
 

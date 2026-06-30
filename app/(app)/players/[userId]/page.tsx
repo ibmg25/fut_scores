@@ -40,40 +40,48 @@ function PredictionResultCard({ match, prediction }: PredictionResultCardProps) 
       </div>
 
       {/* Teams row with official result */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 flex items-center gap-2 min-w-0">
-          {match.home_team.flag_url && (
-            <Image
-              src={match.home_team.flag_url}
-              alt={match.home_team.name}
-              width={32}
-              height={24}
-              className="rounded-sm shrink-0 w-8 h-6"
-              unoptimized
-            />
-          )}
-          <span className="text-sm font-semibold truncate">{match.home_team.name}</span>
+      <div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            {match.home_team.flag_url && (
+              <Image
+                src={match.home_team.flag_url}
+                alt={match.home_team.name}
+                width={32}
+                height={24}
+                className="rounded-sm shrink-0 w-8 h-6"
+                unoptimized
+              />
+            )}
+            <span className="text-sm font-semibold truncate">{match.home_team.name}</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-2xl font-bold">{match.home_score}</span>
+            <span className="text-muted-foreground text-lg">–</span>
+            <span className="text-2xl font-bold">{match.away_score}</span>
+          </div>
+
+          <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
+            <span className="text-sm font-semibold truncate text-right">{match.away_team.name}</span>
+            {match.away_team.flag_url && (
+              <Image
+                src={match.away_team.flag_url}
+                alt={match.away_team.name}
+                width={32}
+                height={24}
+                className="rounded-sm shrink-0 w-8 h-6"
+                unoptimized
+              />
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-2xl font-bold">{match.home_score}</span>
-          <span className="text-muted-foreground text-lg">–</span>
-          <span className="text-2xl font-bold">{match.away_score}</span>
-        </div>
-
-        <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
-          <span className="text-sm font-semibold truncate text-right">{match.away_team.name}</span>
-          {match.away_team.flag_url && (
-            <Image
-              src={match.away_team.flag_url}
-              alt={match.away_team.name}
-              width={32}
-              height={24}
-              className="rounded-sm shrink-0 w-8 h-6"
-              unoptimized
-            />
-          )}
-        </div>
+        {match.is_knockout && match.penalty_winner_team && (
+          <div className="text-[10px] text-muted-foreground text-center mt-1">
+            ({match.penalty_winner_team.name} won on pens)
+          </div>
+        )}
       </div>
 
       {/* Their pick */}
