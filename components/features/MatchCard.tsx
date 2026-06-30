@@ -169,6 +169,13 @@ export default function MatchCard({ match, prediction }: Props) {
             </div>
           </div>
 
+          {/* Penalty pick for locked (non-finished) matches */}
+          {isLocked && isKnockout && prediction?.predicted_penalty_winner_team_id && penaltyPickTeam && (
+            <div className="text-xs text-muted-foreground text-center">
+              Penalty pick: {penaltyPickTeam.name}
+            </div>
+          )}
+
           {/* Prediction summary for finished matches */}
           {isFinished && prediction && (
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
